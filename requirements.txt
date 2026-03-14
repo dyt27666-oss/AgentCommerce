@@ -1,4 +1,6 @@
 langgraph
 langchain
 langchain-openai
+beautifulsoup4
 pytest
+requests

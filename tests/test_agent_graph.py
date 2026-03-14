@@ -7,7 +7,10 @@ def make_initial_state() -> dict:
     """Build the initial state used by the workflow tests."""
     return {
         "user_query": "Analyze bluetooth earphone market",
-        "task_plan": [],
+        "crawl_keyword": "",
+        "crawl_fields": [],
+        "crawl_depth": 1,
+        "crawl_limit": 20,
         "products": [],
         "clean_data": [],
         "analysis_result": {},
@@ -22,10 +25,14 @@ def test_agent_graph_runs_end_to_end() -> None:
 
     result = graph.invoke(make_initial_state())
 
-    assert result["task_plan"]
+    assert result["crawl_keyword"] == "bluetooth earphone"
+    assert result["crawl_fields"] == ["name", "price", "rating", "reviews", "url"]
+    assert result["crawl_depth"] == 1
+    assert result["crawl_limit"] == 20
     assert result["products"]
     assert result["clean_data"]
     assert result["analysis_result"]
+    assert result["analysis_result"]["product_count"] >= 1
     assert result["strategy"]
     assert result["report"]
 
@@ -37,9 +44,9 @@ def test_final_report_contains_required_sections() -> None:
     result = graph.invoke(make_initial_state())
     report = result["report"]
 
-    assert report.startswith("# ")
-    assert "## 用户需求" in report
-    assert "## 执行计划" in report
-    assert "## 商品样本" in report
-    assert "## 市场分析" in report
-    assert "## 策略建议" in report
+    assert report.startswith("# Market Analysis Report")
+    assert "## Query" in report
+    assert "## Crawl Configuration" in report
+    assert "## Dataset Summary" in report
+    assert "## Price Analysis" in report
+    assert "## Strategy Suggestion" in report

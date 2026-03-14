@@ -7,7 +7,10 @@ class AgentState(TypedDict):
     """Shared state passed between all LangGraph nodes."""
 
     user_query: str
-    task_plan: list
+    crawl_keyword: str
+    crawl_fields: list
+    crawl_depth: int
+    crawl_limit: int
     products: list
     clean_data: list
     analysis_result: dict

@@ -8,38 +8,51 @@ def report_agent(state: AgentState) -> dict:
     product_lines = []
     for product in state["clean_data"]:
         product_lines.append(
-            "- {name}: 价格 {price} RMB, 评分 {rating}, 评论数 {reviews}".format(
+            "- {name} | price=${price:.2f} | rating={rating} | reviews={reviews} | url={url}".format(
                 name=product["name"],
                 price=product["price"],
                 rating=product["rating"],
                 reviews=product["reviews"],
+                url=product.get("url", ""),
             )
         )
 
     if not product_lines:
-        product_lines.append("- 暂无有效商品数据")
+        product_lines.append("- No valid product records were available after cleaning.")
 
     analysis_result = state["analysis_result"]
     report = "\n".join(
         [
-            "# EcomScout-AI 市场分析报告",
+            "# Market Analysis Report",
             "",
-            "## 用户需求",
+            "## Query",
             state["user_query"],
             "",
-            "## 执行计划",
-            *[f"- {step}" for step in state["task_plan"]],
+            "## Crawl Configuration",
+            f"- keyword: {state['crawl_keyword']}",
+            f"- fields: {', '.join(state['crawl_fields'])}",
+            f"- depth: {state['crawl_depth']}",
+            f"- limit: {state['crawl_limit']}",
             "",
-            "## 商品样本",
+            "## Dataset Summary",
+            f"- product_count: {analysis_result.get('product_count', 0)}",
+            f"- cleaned_records: {len(state['clean_data'])}",
+            "",
+            "## Sample Products",
             *product_lines,
             "",
-            "## 市场分析",
-            f"- 样本数量: {analysis_result.get('product_count', 0)}",
-            f"- 平均价格: {analysis_result.get('average_price', 0)} RMB",
-            f"- 最高价格: {analysis_result.get('max_price', 0)} RMB",
-            f"- 最低价格: {analysis_result.get('min_price', 0)} RMB",
+            "## Price Analysis",
+            f"- avg_price: ${analysis_result.get('avg_price', 0.0):.2f}",
+            (
+                f"- price_range: ${analysis_result.get('price_range', {}).get('min', 0.0):.2f} "
+                f"to ${analysis_result.get('price_range', {}).get('max', 0.0):.2f}"
+            ),
+            (
+                "- rating_distribution: "
+                f"{analysis_result.get('rating_distribution', {})}"
+            ),
             "",
-            "## 策略建议",
+            "## Strategy Suggestion",
             state["strategy"],
         ]
     )

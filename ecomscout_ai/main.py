@@ -8,7 +8,10 @@ def build_initial_state(user_query: str) -> AgentState:
     """Create the initial shared state for the workflow."""
     return {
         "user_query": user_query,
-        "task_plan": [],
+        "crawl_keyword": "",
+        "crawl_fields": [],
+        "crawl_depth": 1,
+        "crawl_limit": 20,
         "products": [],
         "clean_data": [],
         "analysis_result": {},
