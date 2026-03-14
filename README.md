@@ -150,6 +150,8 @@ OPENAI_API_KEY=
 
 You can copy from `.env.example` when testing the LLM-assisted strategy path.
 
+For the smallest real validation path, see [docs/llm-assisted.md](docs/llm-assisted.md).
+
 Run tests:
 
 ```powershell
