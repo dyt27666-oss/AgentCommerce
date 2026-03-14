@@ -46,6 +46,8 @@ def test_report_agent_shows_crawl_status_and_error_metadata() -> None:
             },
             "strategy_mode": "rule_based",
             "strategy_execution_mode": "rule_based_fallback",
+            "llm_parse_status": "fallback",
+            "llm_fallback_reason": "schema_validation_failed",
             "decision_brief": {
                 "market_summary": "Sample is fallback-based and limited.",
                 "pricing_recommendation": "Use a cautious launch price.",
@@ -66,3 +68,5 @@ def test_report_agent_shows_crawl_status_and_error_metadata() -> None:
     assert "warnings: detail_fetch_failed" in report
     assert "## Decision Brief" in report
     assert "confidence: low" in report
+    assert "llm_parse_status: fallback" in report
+    assert "llm_fallback_reason: schema_validation_failed" in report

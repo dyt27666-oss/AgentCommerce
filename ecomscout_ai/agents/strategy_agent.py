@@ -6,12 +6,19 @@ import json
 import os
 import re
 from copy import deepcopy
+from typing import Any
 
 from ecomscout_ai.state.agent_state import AgentState
 
 STRATEGY_MODE_RULE_BASED = "rule_based"
 STRATEGY_MODE_LLM_ASSISTED = "llm_assisted"
 STRATEGY_MODE_RULE_BASED_FALLBACK = "rule_based_fallback"
+LLM_PARSE_STATUS_NOT_ATTEMPTED = "not_attempted"
+LLM_PARSE_STATUS_PARSED = "parsed"
+LLM_PARSE_STATUS_FALLBACK = "fallback"
+ALLOWED_CONFIDENCE_VALUES = {"high", "medium", "low"}
+MAX_LIST_ITEMS = 3
+MAX_TEXT_LENGTH = 240
 
 DEFAULT_DECISION_BRIEF = {
     "market_summary": "Insufficient data to summarize the market.",
@@ -27,23 +34,85 @@ def _clone_default_brief() -> dict:
     return deepcopy(DEFAULT_DECISION_BRIEF)
 
 
-def _normalize_list(value, fallback_item: str) -> list[str]:
-    """Normalize a loose LLM output value into a short string list."""
-    if isinstance(value, list):
-        normalized = [str(item).strip() for item in value if str(item).strip()]
-        return normalized or [fallback_item]
-    if isinstance(value, str) and value.strip():
-        return [value.strip()]
-    return [fallback_item]
+def _collapse_whitespace(value: str) -> str:
+    """Normalize repeated whitespace without changing semantics."""
+    return re.sub(r"\s+", " ", value).strip()
 
 
-def _normalize_confidence(value) -> str:
+def _clip_text(value: str, max_length: int = MAX_TEXT_LENGTH) -> str:
+    """Keep brief text concise enough for deterministic reporting."""
+    if len(value) <= max_length:
+        return value
+    return value[: max_length - 3].rstrip() + "..."
+
+
+def _normalize_text(value: Any) -> str:
+    """Normalize a potentially loose text field into a compact string."""
+    if value is None:
+        return ""
+    return _clip_text(_collapse_whitespace(str(value)))
+
+
+def _normalize_confidence(value: Any) -> str:
     """Normalize confidence into the supported enum values."""
     if isinstance(value, str):
-        normalized = value.strip().lower()
-        if normalized in {"high", "medium", "low"}:
+        normalized = _collapse_whitespace(value).lower()
+        if normalized in ALLOWED_CONFIDENCE_VALUES:
             return normalized
-    return "low"
+    raise ValueError("confidence must be one of high, medium, low")
+
+
+def _normalize_string_list(value: Any, field_name: str) -> list[str]:
+    """Normalize list fields while preserving a strict output contract."""
+    if not isinstance(value, list):
+        raise ValueError(f"{field_name} must be a list of strings")
+
+    normalized: list[str] = []
+    for item in value:
+        if not isinstance(item, str):
+            raise ValueError(f"{field_name} must be a list of strings")
+        cleaned = _normalize_text(item)
+        if cleaned:
+            normalized.append(cleaned)
+        if len(normalized) >= MAX_LIST_ITEMS:
+            break
+
+    if not normalized:
+        raise ValueError(f"{field_name} cannot be empty")
+
+    return normalized
+
+
+def _validate_and_normalize_brief(raw_brief: dict) -> dict:
+    """Validate the LLM brief and return a strict normalized structure."""
+    if not isinstance(raw_brief, dict):
+        raise ValueError("decision_brief must be a JSON object")
+
+    required_keys = {
+        "market_summary",
+        "pricing_recommendation",
+        "key_risks",
+        "next_actions",
+        "confidence",
+    }
+    missing_keys = [key for key in required_keys if key not in raw_brief]
+    if missing_keys:
+        raise ValueError(f"decision_brief missing required keys: {', '.join(sorted(missing_keys))}")
+
+    market_summary = _normalize_text(raw_brief["market_summary"])
+    pricing_recommendation = _normalize_text(raw_brief["pricing_recommendation"])
+    if not market_summary:
+        raise ValueError("market_summary must be a non-empty string")
+    if not pricing_recommendation:
+        raise ValueError("pricing_recommendation must be a non-empty string")
+
+    return {
+        "market_summary": market_summary,
+        "pricing_recommendation": pricing_recommendation,
+        "key_risks": _normalize_string_list(raw_brief["key_risks"], "key_risks"),
+        "next_actions": _normalize_string_list(raw_brief["next_actions"], "next_actions"),
+        "confidence": _normalize_confidence(raw_brief["confidence"]),
+    }
 
 
 def _build_data_origin(state: AgentState) -> str:
@@ -122,10 +191,13 @@ def _build_llm_prompt(state: AgentState) -> str:
         "analysis_result": state["analysis_result"],
     }
     return (
-        "You are a market strategy assistant. Based on the JSON input, produce only a JSON object "
-        "with keys market_summary, pricing_recommendation, key_risks, next_actions, confidence. "
-        "confidence must be one of high, medium, low. key_risks and next_actions must be short lists. "
-        "Do not include markdown or explanations.\n\n"
+        "You are a market strategy assistant. Based on the JSON input, output only one JSON object. "
+        "Do not output markdown, code fences, prose, or explanations. "
+        "Required keys: market_summary, pricing_recommendation, key_risks, next_actions, confidence. "
+        "market_summary and pricing_recommendation must be short non-empty strings. "
+        "key_risks and next_actions must be JSON arrays of short strings with at most 3 items each. "
+        "confidence must be exactly one of: high, medium, low. "
+        "If fallback_used is true, error_type is not null, or dataset quality is weak, reflect that risk in key_risks.\n\n"
         f"INPUT:\n{json.dumps(payload, ensure_ascii=True)}"
     )
 
@@ -149,30 +221,6 @@ def _extract_json_object(text: str) -> dict:
     return parsed
 
 
-def _normalize_llm_brief(raw_brief: dict) -> dict:
-    """Normalize loose LLM output into the strict decision brief schema."""
-    return {
-        "market_summary": str(raw_brief.get("market_summary", DEFAULT_DECISION_BRIEF["market_summary"])).strip()
-        or DEFAULT_DECISION_BRIEF["market_summary"],
-        "pricing_recommendation": str(
-            raw_brief.get(
-                "pricing_recommendation",
-                DEFAULT_DECISION_BRIEF["pricing_recommendation"],
-            )
-        ).strip()
-        or DEFAULT_DECISION_BRIEF["pricing_recommendation"],
-        "key_risks": _normalize_list(
-            raw_brief.get("key_risks"),
-            DEFAULT_DECISION_BRIEF["key_risks"][0],
-        ),
-        "next_actions": _normalize_list(
-            raw_brief.get("next_actions"),
-            DEFAULT_DECISION_BRIEF["next_actions"][0],
-        ),
-        "confidence": _normalize_confidence(raw_brief.get("confidence")),
-    }
-
-
 def _run_llm_assisted_strategy(state: AgentState) -> dict:
     """Run the LLM-assisted strategy generation."""
     from langchain_openai import ChatOpenAI
@@ -193,9 +241,21 @@ def _run_llm_assisted_strategy(state: AgentState) -> dict:
         )
 
     parsed = _extract_json_object(str(content))
-    brief = _normalize_llm_brief(parsed)
+    brief = _validate_and_normalize_brief(parsed)
     strategy = brief["pricing_recommendation"]
     return {"strategy": strategy, "decision_brief": brief}
+
+
+def _fallback_result(state: AgentState, reason: str) -> dict:
+    """Return an honest deterministic fallback payload."""
+    strategy, brief = _build_rule_based_strategy(state)
+    return {
+        "strategy": strategy,
+        "decision_brief": brief,
+        "strategy_execution_mode": STRATEGY_MODE_RULE_BASED_FALLBACK,
+        "llm_parse_status": LLM_PARSE_STATUS_FALLBACK,
+        "llm_fallback_reason": reason,
+    }
 
 
 def strategy_agent(state: AgentState) -> dict:
@@ -205,22 +265,32 @@ def strategy_agent(state: AgentState) -> dict:
     if strategy_mode == STRATEGY_MODE_LLM_ASSISTED:
         try:
             llm_result = _run_llm_assisted_strategy(state)
+            brief = _validate_and_normalize_brief(llm_result["decision_brief"])
             return {
                 "strategy": llm_result["strategy"],
-                "decision_brief": _normalize_llm_brief(llm_result["decision_brief"]),
-                "strategy_execution_mode": STRATEGY_MODE_LLM_ASSISTED,
-            }
-        except Exception:
-            strategy, brief = _build_rule_based_strategy(state)
-            return {
-                "strategy": strategy,
                 "decision_brief": brief,
-                "strategy_execution_mode": STRATEGY_MODE_RULE_BASED_FALLBACK,
+                "strategy_execution_mode": STRATEGY_MODE_LLM_ASSISTED,
+                "llm_parse_status": LLM_PARSE_STATUS_PARSED,
+                "llm_fallback_reason": None,
             }
+        except ValueError as exc:
+            if "JSON object" in str(exc):
+                return _fallback_result(state, "llm_output_parse_failed")
+            return _fallback_result(state, "schema_validation_failed")
+        except json.JSONDecodeError:
+            return _fallback_result(state, "llm_output_parse_failed")
+        except RuntimeError:
+            return _fallback_result(state, "llm_runtime_error")
+        except Exception as exc:
+            if "JSON object" in str(exc):
+                return _fallback_result(state, "llm_output_parse_failed")
+            return _fallback_result(state, "llm_runtime_error")
 
     strategy, brief = _build_rule_based_strategy(state)
     return {
         "strategy": strategy,
         "decision_brief": brief,
         "strategy_execution_mode": STRATEGY_MODE_RULE_BASED,
+        "llm_parse_status": LLM_PARSE_STATUS_NOT_ATTEMPTED,
+        "llm_fallback_reason": None,
     }

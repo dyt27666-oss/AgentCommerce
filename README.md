@@ -125,6 +125,23 @@ By default, the project runs in `rule_based` strategy mode and does not require 
 
 Only when you explicitly enable `llm_assisted` strategy mode do you need to configure environment variables.
 
+## Strategy Modes
+
+The current `strategy_agent` supports:
+
+- `rule_based`
+- `llm_assisted`
+
+It also returns a structured `Decision Brief` and tracks the actual execution path through `strategy_execution_mode`:
+
+- `rule_based`
+- `llm_assisted`
+- `rule_based_fallback`
+
+Default behavior does not require any API key because the workflow starts in `rule_based` mode.
+
+If `llm_assisted` is enabled and the model output cannot be parsed or validated, the system automatically falls back to `rule_based_fallback`.
+
 The current minimum `.env` shape is:
 
 ```env

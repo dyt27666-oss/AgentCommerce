@@ -20,6 +20,8 @@ class AgentState(TypedDict):
     analysis_result: dict
     strategy_mode: str
     strategy_execution_mode: str
+    llm_parse_status: str
+    llm_fallback_reason: str | None
     decision_brief: dict
     strategy: str
     report: str

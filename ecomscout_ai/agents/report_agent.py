@@ -84,6 +84,8 @@ def report_agent(state: AgentState) -> dict:
             "",
             "## Strategy Suggestion",
             f"- strategy_execution_mode: {state['strategy_execution_mode']}",
+            f"- llm_parse_status: {state['llm_parse_status']}",
+            f"- llm_fallback_reason: {state['llm_fallback_reason']}",
             state["strategy"],
             "",
             "## Decision Brief",

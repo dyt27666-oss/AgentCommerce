@@ -20,6 +20,8 @@ def make_initial_state() -> dict:
         "analysis_result": {},
         "strategy_mode": "rule_based",
         "strategy_execution_mode": "rule_based",
+        "llm_parse_status": "not_attempted",
+        "llm_fallback_reason": None,
         "decision_brief": {
             "market_summary": "",
             "pricing_recommendation": "",
@@ -60,6 +62,7 @@ def test_agent_graph_runs_end_to_end() -> None:
         "llm_assisted",
         "rule_based_fallback",
     }
+    assert result["llm_parse_status"] in {"not_attempted", "parsed", "fallback"}
     assert result["decision_brief"]["confidence"] in {"high", "medium", "low"}
     assert result["report"]
 
@@ -85,3 +88,4 @@ def test_final_report_contains_required_sections() -> None:
     assert "## Brand Overview" in report
     assert "## Strategy Suggestion" in report
     assert "## Decision Brief" in report
+    assert "llm_parse_status:" in report

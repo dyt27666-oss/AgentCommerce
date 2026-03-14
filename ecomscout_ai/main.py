@@ -1,7 +1,11 @@
 """Main entrypoint for EcomScout-AI."""
 
 from ecomscout_ai.graph.agent_graph import build_agent_graph
-from ecomscout_ai.agents.strategy_agent import DEFAULT_DECISION_BRIEF, STRATEGY_MODE_RULE_BASED
+from ecomscout_ai.agents.strategy_agent import (
+    DEFAULT_DECISION_BRIEF,
+    LLM_PARSE_STATUS_NOT_ATTEMPTED,
+    STRATEGY_MODE_RULE_BASED,
+)
 from ecomscout_ai.state.agent_state import AgentState
 
 
@@ -22,6 +26,8 @@ def build_initial_state(user_query: str) -> AgentState:
         "analysis_result": {},
         "strategy_mode": STRATEGY_MODE_RULE_BASED,
         "strategy_execution_mode": STRATEGY_MODE_RULE_BASED,
+        "llm_parse_status": LLM_PARSE_STATUS_NOT_ATTEMPTED,
+        "llm_fallback_reason": None,
         "decision_brief": DEFAULT_DECISION_BRIEF.copy(),
         "strategy": "",
         "report": "",
