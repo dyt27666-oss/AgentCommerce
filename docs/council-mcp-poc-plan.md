@@ -154,7 +154,108 @@ PM / Architect / Critic / QA
 
 This is enough for a v0 bridge PoC.
 
-## 9. Recommended First PoC Task
+## 9. PoC I/O Contract (JSON Draft)
+
+These JSON objects are a **tiny PoC draft** only.
+
+They are:
+
+1. not a stable protocol
+2. not a production schema
+3. not evidence that an automated bridge is already implemented in this repository
+
+The purpose is to align Council handoff fields before bridge implementation.
+
+### CouncilBrief
+
+```json
+{
+  "brief_id": "council-poc-brief-001",
+  "owner_intent": "Improve llm_assisted docs clarity without changing runtime behavior.",
+  "scope": [
+    "docs-only wording update",
+    "no workflow or business logic changes"
+  ],
+  "non_goals": [
+    "no code refactor",
+    "no new orchestration features"
+  ],
+  "touched_files": [
+    "docs/llm-assisted.md",
+    "README.md"
+  ],
+  "acceptance_criteria": [
+    "instructions are clearer and step-ordered",
+    "success/fallback check fields are explicit"
+  ],
+  "validation_steps": [
+    "git status --short --branch",
+    "confirm only scoped docs files changed"
+  ],
+  "delivery_format": [
+    "change summary",
+    "changed files",
+    "git status",
+    "next-step recommendation"
+  ]
+}
+```
+
+### CodexExecutionRequest
+
+```json
+{
+  "request_id": "exec-req-001",
+  "brief_id": "council-poc-brief-001",
+  "execution_brief": {
+    "owner_intent": "Improve llm_assisted docs clarity without changing runtime behavior.",
+    "scope": [
+      "docs-only wording update"
+    ],
+    "touched_files": [
+      "docs/llm-assisted.md",
+      "README.md"
+    ]
+  },
+  "repo_context": {
+    "repo": "AgentCommerce",
+    "branch": "main"
+  },
+  "constraints": [
+    "do not change workflow graph",
+    "do not edit business logic",
+    "do not add new features"
+  ]
+}
+```
+
+### CodexExecutionResult
+
+```json
+{
+  "request_id": "exec-req-001",
+  "status": "completed",
+  "changed_files": [
+    "docs/llm-assisted.md"
+  ],
+  "test_results": {
+    "ran": false,
+    "reason": "docs-only change"
+  },
+  "summary": "Clarified llm_assisted usage steps and fallback signal checks.",
+  "next_step_suggestion": "Review wording with the owner and merge if approved."
+}
+```
+
+Why define this first?
+
+Because a tiny explicit contract reduces bridge ambiguity:
+
+1. Council output becomes predictable
+2. Codex execution input is bounded
+3. result reporting becomes comparable across runs
+
+## 10. Recommended First PoC Task
 
 The first PoC task should be:
 
@@ -172,7 +273,7 @@ Why this task fits:
 4. it can be verified easily
 5. it avoids the risk of testing bridge behavior and business logic changes at the same time
 
-## 10. Why This Task Is Good For The Bridge PoC
+## 11. Why This Task Is Good For The Bridge PoC
 
 This task is useful because it isolates the bridge question from product complexity.
 
@@ -189,7 +290,7 @@ It avoids mixing in:
 3. workflow graph changes
 4. complex validation logic
 
-## 11. Main Risks And Watchpoints
+## 12. Main Risks And Watchpoints
 
 ### Risk 1: fake automation
 
@@ -232,7 +333,7 @@ Codex must only execute.
 
 If those responsibilities blur, the PoC becomes hard to evaluate.
 
-## 12. PoC Ready / Not Ready Check
+## 13. PoC Ready / Not Ready Check
 
 ### Ready now
 
@@ -258,7 +359,7 @@ So the readiness judgment is:
 - **Ready for a tiny bridge PoC**
 - **Not ready for autonomous multi-agent operations**
 
-## 13. Suggested Next-Step If Ready
+## 14. Suggested Next-Step If Ready
 
 If proceeding, the smallest next implementation should be:
 
@@ -273,7 +374,7 @@ This should still avoid:
 2. business logic changes
 3. long-running agent loops
 
-## 14. If Not Ready, What Is Missing
+## 15. If Not Ready, What Is Missing
 
 If the team chooses not to implement the bridge PoC yet, the missing prerequisites are:
 
@@ -283,7 +384,7 @@ If the team chooses not to implement the bridge PoC yet, the missing prerequisit
 
 These are planning gaps, not architectural blockers.
 
-## 15. Practical Conclusion
+## 16. Practical Conclusion
 
 The repository is ready for a **small, documentation-first Council → Codex bridge PoC**, but not for a full autonomous Council system.
 
