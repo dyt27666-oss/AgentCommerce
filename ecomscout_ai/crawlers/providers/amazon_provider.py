@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from requests import HTTPError, RequestException, Timeout
 from urllib.parse import quote_plus, urljoin
 
 from bs4 import BeautifulSoup
@@ -11,6 +12,7 @@ from ecomscout_ai.crawlers.playwright_client import PageClient
 
 AMAZON_BASE_URL = "https://www.amazon.com"
 DETAIL_FETCH_LIMIT = 3
+RESULT_CARD_SELECTOR = 'div[data-component-type="s-search-result"]'
 
 
 def _clean_price(value: str | None) -> float | None:
@@ -51,19 +53,46 @@ def _extract_text(node) -> str | None:
     return text or None
 
 
+def classify_search_page(html: str) -> str:
+    """Classify the Amazon search page state before parsing results."""
+    html_lower = html.lower()
+    if "validatecaptcha" in html_lower or "type the characters you see" in html_lower:
+        return "blocked"
+    if "sorry, something went wrong" in html_lower or "dogsofamazon" in html_lower:
+        return "error_page"
+
+    soup = BeautifulSoup(html, "html.parser")
+    result_cards = soup.select(RESULT_CARD_SELECTOR)
+    if result_cards:
+        return "results"
+
+    empty_markers = [
+        "no results for",
+        "did not match any products",
+        "0 results",
+    ]
+    if any(marker in html_lower for marker in empty_markers):
+        return "empty_results"
+
+    return "selector_mismatch"
+
+
 def parse_search_results_html(html: str, limit: int) -> list[dict]:
     """Parse Amazon search results HTML into normalized product dictionaries."""
     soup = BeautifulSoup(html, "html.parser")
     products: list[dict] = []
 
-    for result in soup.select('div[data-component-type="s-search-result"]'):
+    for result in soup.select(RESULT_CARD_SELECTOR):
         card_text = result.get_text(" ", strip=True).lower()
-        if "sponsored" in card_text:
+        if not card_text or "sponsored" in card_text:
             continue
 
-        title_node = result.select_one("h2 a span")
+        title_node = result.select_one("h2 a span") or result.select_one("h2 span")
         link_node = result.select_one("h2 a")
-        price_node = result.select_one(".a-price .a-offscreen")
+        price_node = (
+            result.select_one(".a-price .a-offscreen")
+            or result.select_one(".a-price-whole")
+        )
         rating_node = result.select_one(".a-icon-alt")
         reviews_node = (
             result.select_one("span[aria-label*='ratings']")
@@ -129,25 +158,43 @@ class AmazonProvider:
         limit: int,
     ) -> dict:
         """Fetch normalized Amazon products for the given crawl parameters."""
+        search_url = f"{AMAZON_BASE_URL}/s?k={quote_plus(keyword)}"
+
         try:
-            search_url = f"{AMAZON_BASE_URL}/s?k={quote_plus(keyword)}"
             search_html = self.client.fetch_text(search_url)
-            products = parse_search_results_html(search_html, limit=limit)
-            if not products:
-                raise ValueError("No products parsed from Amazon search results")
+        except Timeout:
+            return self._with_fallback(keyword, depth, limit, "timeout", [])
+        except RequestException:
+            return self._with_fallback(keyword, depth, limit, "network_error", [])
 
-            crawl_status = "success"
-            if depth >= 2 and any(field in fields for field in ("brand", "bsr", "category")):
-                detail_failures = self._enrich_product_details(products)
-                if detail_failures:
-                    crawl_status = "partial_success"
+        page_state = classify_search_page(search_html)
+        if page_state == "blocked":
+            return self._with_fallback(keyword, depth, limit, "blocked_page", [])
+        if page_state == "empty_results":
+            return self._failed("empty_results")
+        if page_state in {"error_page", "selector_mismatch"}:
+            return self._with_fallback(keyword, depth, limit, page_state, [])
 
-            return {"products": products[:limit], "crawl_status": crawl_status}
-        except Exception:
-            fallback_products = self._fallback_products(keyword, depth, limit)
-            if fallback_products:
-                return {"products": fallback_products, "crawl_status": "fallback"}
-            return {"products": [], "crawl_status": "failed"}
+        products = parse_search_results_html(search_html, limit=limit)
+        if not products:
+            return self._with_fallback(keyword, depth, limit, "selector_mismatch", [])
+
+        warnings: list[str] = []
+        crawl_status = "success"
+
+        if depth >= 2 and any(field in fields for field in ("brand", "bsr", "category")):
+            detail_failures = self._enrich_product_details(products)
+            if detail_failures:
+                warnings.append("detail_fetch_failed")
+                crawl_status = "partial_success"
+
+        return {
+            "products": products[:limit],
+            "crawl_status": crawl_status,
+            "warnings": warnings,
+            "error_type": None,
+            "fallback_used": False,
+        }
 
     def _enrich_product_details(self, products: list[dict]) -> int:
         failures = 0
@@ -158,6 +205,27 @@ class AmazonProvider:
             except Exception:
                 failures += 1
         return failures
+
+    def _with_fallback(self, keyword: str, depth: int, limit: int, error_type: str, warnings: list[str]) -> dict:
+        fallback_products = self._fallback_products(keyword, depth, limit)
+        if fallback_products:
+            return {
+                "products": fallback_products,
+                "crawl_status": "fallback",
+                "warnings": warnings,
+                "error_type": error_type,
+                "fallback_used": True,
+            }
+        return self._failed(error_type)
+
+    def _failed(self, error_type: str) -> dict:
+        return {
+            "products": [],
+            "crawl_status": "failed",
+            "warnings": [],
+            "error_type": error_type,
+            "fallback_used": False,
+        }
 
     def _fallback_products(self, keyword: str, depth: int, limit: int) -> list[dict]:
         seed = keyword.title() or "Amazon Product"

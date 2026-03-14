@@ -13,4 +13,4 @@ class CrawlerProvider(Protocol):
         depth: int,
         limit: int,
     ) -> dict:
-        """Fetch normalized product data and crawl status for the request."""
+        """Fetch normalized product data plus crawl diagnostics for the request."""

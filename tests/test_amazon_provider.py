@@ -4,6 +4,7 @@ from requests import HTTPError
 
 from ecomscout_ai.crawlers.providers.amazon_provider import (
     AmazonProvider,
+    classify_search_page,
     parse_product_detail_html,
     parse_search_results_html,
 )
@@ -56,6 +57,25 @@ DETAIL_HTML = """
 </html>
 """
 
+EMPTY_RESULTS_HTML = """
+<html>
+  <body>
+    <div class="s-main-slot"></div>
+    <span>No results for your search</span>
+  </body>
+</html>
+"""
+
+BLOCKED_HTML = """
+<html>
+  <body>
+    <form action="/errors/validateCaptcha">
+      <h4>Type the characters you see in this image:</h4>
+    </form>
+  </body>
+</html>
+"""
+
 
 def test_parse_search_results_html_extracts_normalized_products() -> None:
     """The search page parser should extract normalized product records."""
@@ -85,6 +105,13 @@ def test_parse_product_detail_html_extracts_brand_bsr_and_category() -> None:
     }
 
 
+def test_classify_search_page_distinguishes_normal_empty_and_blocked_pages() -> None:
+    """The provider should classify result page states explicitly."""
+    assert classify_search_page(SEARCH_HTML) == "results"
+    assert classify_search_page(EMPTY_RESULTS_HTML) == "empty_results"
+    assert classify_search_page(BLOCKED_HTML) == "blocked"
+
+
 class FakeClient:
     """Simple client stub used to control crawler responses."""
 
@@ -112,6 +139,8 @@ def test_amazon_provider_uses_fallback_only_after_real_attempt_fails() -> None:
     )
 
     assert result["crawl_status"] == "fallback"
+    assert result["fallback_used"] is True
+    assert result["error_type"] == "network_error"
     assert len(result["products"]) == 3
     assert result["products"][0]["url"].endswith("mock-product-a")
 
@@ -135,6 +164,46 @@ def test_amazon_provider_marks_partial_success_when_detail_fetch_fails() -> None
     )
 
     assert result["crawl_status"] == "partial_success"
+    assert result["fallback_used"] is False
+    assert result["error_type"] is None
+    assert "detail_fetch_failed" in result["warnings"]
     assert len(result["products"]) == 2
     assert result["products"][0]["url"] == detail_url
     assert result["products"][0]["brand"] is None
+
+
+def test_amazon_provider_returns_failed_for_empty_results_without_fallback() -> None:
+    """An empty results page should not silently pretend to be a normal fallback run."""
+    provider = AmazonProvider(
+        client=FakeClient(responses={"https://www.amazon.com/s?k=bluetooth+earphone": EMPTY_RESULTS_HTML})
+    )
+
+    result = provider.fetch_products(
+        keyword="bluetooth earphone",
+        fields=["name", "price", "rating", "reviews", "url"],
+        depth=1,
+        limit=3,
+    )
+
+    assert result["crawl_status"] == "failed"
+    assert result["error_type"] == "empty_results"
+    assert result["fallback_used"] is False
+    assert result["products"] == []
+
+
+def test_amazon_provider_classifies_blocked_pages_and_uses_fallback() -> None:
+    """A blocked page should be classified explicitly before fallback is activated."""
+    provider = AmazonProvider(
+        client=FakeClient(responses={"https://www.amazon.com/s?k=bluetooth+earphone": BLOCKED_HTML})
+    )
+
+    result = provider.fetch_products(
+        keyword="bluetooth earphone",
+        fields=["name", "price", "rating", "reviews", "url"],
+        depth=1,
+        limit=3,
+    )
+
+    assert result["crawl_status"] == "fallback"
+    assert result["error_type"] == "blocked_page"
+    assert result["fallback_used"] is True

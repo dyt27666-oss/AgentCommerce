@@ -1,5 +1,6 @@
 """Report agent implementation."""
 
+from ecomscout_ai.agents.strategy_agent import DEFAULT_DECISION_BRIEF
 from ecomscout_ai.state.agent_state import AgentState
 
 
@@ -26,6 +27,7 @@ def report_agent(state: AgentState) -> dict:
     review_analysis = analysis_result.get("review_analysis", {})
     brand_analysis = analysis_result.get("brand_analysis", {})
     dataset_quality = analysis_result.get("dataset_quality", {})
+    decision_brief = {**DEFAULT_DECISION_BRIEF, **state.get("decision_brief", {})}
 
     report = "\n".join(
         [
@@ -44,6 +46,9 @@ def report_agent(state: AgentState) -> dict:
             f"- crawler_status: {state['crawl_status']}",
             f"- data_origin: {data_origin}",
             f"- records_collected: {len(state['products'])}",
+            f"- error_type: {state['crawl_error_type']}",
+            f"- fallback_used: {state['fallback_used']}",
+            f"- warnings: {', '.join(state['crawl_warnings']) if state['crawl_warnings'] else 'none'}",
             "",
             "## Dataset Summary",
             f"- product_count: {analysis_result.get('product_count', 0)}",
@@ -78,7 +83,15 @@ def report_agent(state: AgentState) -> dict:
             f"- brand_share: {brand_analysis.get('brand_share', {})}",
             "",
             "## Strategy Suggestion",
+            f"- strategy_execution_mode: {state['strategy_execution_mode']}",
             state["strategy"],
+            "",
+            "## Decision Brief",
+            f"- market_summary: {decision_brief['market_summary']}",
+            f"- pricing_recommendation: {decision_brief['pricing_recommendation']}",
+            f"- confidence: {decision_brief['confidence']}",
+            f"- key_risks: {', '.join(decision_brief['key_risks']) if decision_brief['key_risks'] else 'none'}",
+            f"- next_actions: {', '.join(decision_brief['next_actions']) if decision_brief['next_actions'] else 'none'}",
         ]
     )
     return {"report": report}

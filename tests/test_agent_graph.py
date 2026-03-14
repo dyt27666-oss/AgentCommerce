@@ -12,9 +12,21 @@ def make_initial_state() -> dict:
         "crawl_depth": 1,
         "crawl_limit": 20,
         "crawl_status": "failed",
+        "crawl_warnings": [],
+        "crawl_error_type": None,
+        "fallback_used": False,
         "products": [],
         "clean_data": [],
         "analysis_result": {},
+        "strategy_mode": "rule_based",
+        "strategy_execution_mode": "rule_based",
+        "decision_brief": {
+            "market_summary": "",
+            "pricing_recommendation": "",
+            "key_risks": [],
+            "next_actions": [],
+            "confidence": "low",
+        },
         "strategy": "",
         "report": "",
     }
@@ -31,6 +43,9 @@ def test_agent_graph_runs_end_to_end() -> None:
     assert result["crawl_depth"] == 1
     assert result["crawl_limit"] == 20
     assert result["crawl_status"] in {"success", "partial_success", "fallback"}
+    assert "crawl_warnings" in result
+    assert "crawl_error_type" in result
+    assert "fallback_used" in result
     assert result["products"]
     assert result["clean_data"]
     assert result["analysis_result"]
@@ -40,6 +55,12 @@ def test_agent_graph_runs_end_to_end() -> None:
     assert "brand_analysis" in result["analysis_result"]
     assert "dataset_quality" in result["analysis_result"]
     assert result["strategy"]
+    assert result["strategy_execution_mode"] in {
+        "rule_based",
+        "llm_assisted",
+        "rule_based_fallback",
+    }
+    assert result["decision_brief"]["confidence"] in {"high", "medium", "low"}
     assert result["report"]
 
 
@@ -54,6 +75,8 @@ def test_final_report_contains_required_sections() -> None:
     assert "## Query" in report
     assert "## Crawl Configuration" in report
     assert "## Data Source" in report
+    assert "crawler_status:" in report
+    assert "data_origin:" in report
     assert "## Dataset Summary" in report
     assert "## Dataset Quality" in report
     assert "## Price Analysis" in report
@@ -61,3 +84,4 @@ def test_final_report_contains_required_sections() -> None:
     assert "## Review Statistics" in report
     assert "## Brand Overview" in report
     assert "## Strategy Suggestion" in report
+    assert "## Decision Brief" in report

@@ -29,6 +29,9 @@ def test_crawler_agent_returns_products_and_status(monkeypatch) -> None:
                     }
                 ],
                 "crawl_status": "success",
+                "warnings": [],
+                "error_type": None,
+                "fallback_used": False,
             }
         ),
     )
@@ -50,4 +53,7 @@ def test_crawler_agent_returns_products_and_status(monkeypatch) -> None:
     )
 
     assert result["crawl_status"] == "success"
+    assert result["crawl_warnings"] == []
+    assert result["crawl_error_type"] is None
+    assert result["fallback_used"] is False
     assert result["products"][0]["name"] == "Product A"

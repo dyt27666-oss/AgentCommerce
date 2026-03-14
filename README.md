@@ -119,6 +119,20 @@ Run the workflow:
 py main.py
 ```
 
+### Optional Strategy LLM Configuration
+
+By default, the project runs in `rule_based` strategy mode and does not require any API key.
+
+Only when you explicitly enable `llm_assisted` strategy mode do you need to configure environment variables.
+
+The current minimum `.env` shape is:
+
+```env
+OPENAI_API_KEY=
+```
+
+You can copy from `.env.example` when testing the LLM-assisted strategy path.
+
 Run tests:
 
 ```powershell

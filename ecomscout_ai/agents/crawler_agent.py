@@ -16,4 +16,7 @@ def crawler_agent(state: AgentState) -> dict:
     return {
         "products": crawl_result["products"],
         "crawl_status": crawl_result["crawl_status"],
+        "crawl_warnings": crawl_result["warnings"],
+        "crawl_error_type": crawl_result["error_type"],
+        "fallback_used": crawl_result["fallback_used"],
     }
