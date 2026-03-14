@@ -1,5 +1,9 @@
 """Unit tests for strategy agent modes and decision brief output."""
 
+from copy import deepcopy
+
+import pytest
+
 from ecomscout_ai.agents.strategy_agent import (
     LLM_PARSE_STATUS_FALLBACK,
     LLM_PARSE_STATUS_NOT_ATTEMPTED,
@@ -11,8 +15,64 @@ from ecomscout_ai.agents.strategy_agent import (
     _extract_json_object,
     _get_llm_config,
     _get_llm_endpoint_candidates,
+    _validate_and_normalize_brief,
     strategy_agent,
 )
+
+LLM_SUCCESS_BRIEF_SAMPLE = {
+    "market_summary": "Competition is mid-priced.",
+    "pricing_recommendation": "Launch slightly above the median.",
+    "key_risks": ["Fallback data reduces confidence."],
+    "next_actions": ["Validate with live crawl data."],
+    "confidence": "medium",
+}
+
+LLM_SCHEMA_FAILURE_SAMPLE = {
+    "market_summary": "Only one field present.",
+    "confidence": "medium",
+}
+
+LLM_NORMALIZATION_INPUT_SAMPLE = {
+    "market_summary": "  Competition  is concentrated   in the mid band.  ",
+    "pricing_recommendation": "  Launch near the median price while validating with live crawl data.  ",
+    "key_risks": [
+        "  Fallback data weakens confidence.  ",
+        "",
+        " Brand coverage is limited. ",
+        " Sample size is small. ",
+        "Extra item that should be trimmed.",
+    ],
+    "next_actions": [
+        " Retry the live crawl. ",
+        "  Expand the keyword set. ",
+        "",
+        " Review brand signals. ",
+        "Extra action that should be trimmed.",
+    ],
+    "confidence": " MEDIUM ",
+}
+
+LLM_NORMALIZATION_EXPECTED_SAMPLE = {
+    "market_summary": "Competition is concentrated in the mid band.",
+    "pricing_recommendation": "Launch near the median price while validating with live crawl data.",
+    "key_risks": [
+        "Fallback data weakens confidence.",
+        "Brand coverage is limited.",
+        "Sample size is small.",
+    ],
+    "next_actions": [
+        "Retry the live crawl.",
+        "Expand the keyword set.",
+        "Review brand signals.",
+    ],
+    "confidence": "medium",
+}
+
+
+@pytest.fixture
+def base_state() -> dict:
+    """Provide a reusable regression fixture for strategy agent tests."""
+    return make_state(STRATEGY_MODE_RULE_BASED)
 
 
 def make_state(strategy_mode: str) -> dict:
@@ -94,6 +154,11 @@ def test_strategy_agent_llm_assisted_falls_back_when_llm_errors(monkeypatch) -> 
     assert result["decision_brief"]["confidence"] in {"high", "medium", "low"}
     assert result["llm_parse_status"] == LLM_PARSE_STATUS_FALLBACK
     assert result["llm_fallback_reason"] == "llm_runtime_error"
+    assert result["strategy"]
+    assert result["decision_brief"]["market_summary"]
+    assert result["decision_brief"]["pricing_recommendation"]
+    assert result["decision_brief"]["key_risks"]
+    assert result["decision_brief"]["next_actions"]
 
 
 def test_strategy_agent_llm_assisted_accepts_valid_json_object(monkeypatch) -> None:
@@ -102,13 +167,7 @@ def test_strategy_agent_llm_assisted_accepts_valid_json_object(monkeypatch) -> N
         "ecomscout_ai.agents.strategy_agent._run_llm_assisted_strategy",
         lambda state: {
             "strategy": "Use a premium launch position.",
-            "decision_brief": {
-                "market_summary": "Competition is mid-priced.",
-                "pricing_recommendation": "Launch slightly above the median.",
-                "key_risks": ["Fallback data reduces confidence."],
-                "next_actions": ["Validate with live crawl data."],
-                "confidence": "medium",
-            },
+            "decision_brief": deepcopy(LLM_SUCCESS_BRIEF_SAMPLE),
         },
     )
 
@@ -118,13 +177,7 @@ def test_strategy_agent_llm_assisted_accepts_valid_json_object(monkeypatch) -> N
     assert result["strategy"] == "Use a premium launch position."
     assert result["llm_parse_status"] == LLM_PARSE_STATUS_PARSED
     assert result["llm_fallback_reason"] is None
-    assert result["decision_brief"] == {
-        "market_summary": "Competition is mid-priced.",
-        "pricing_recommendation": "Launch slightly above the median.",
-        "key_risks": ["Fallback data reduces confidence."],
-        "next_actions": ["Validate with live crawl data."],
-        "confidence": "medium",
-    }
+    assert result["decision_brief"] == LLM_SUCCESS_BRIEF_SAMPLE
 
 
 def test_extract_json_object_accepts_markdown_wrapped_json() -> None:
@@ -150,10 +203,7 @@ def test_strategy_agent_llm_assisted_falls_back_on_missing_fields(monkeypatch) -
         "ecomscout_ai.agents.strategy_agent._run_llm_assisted_strategy",
         lambda state: {
             "strategy": "Incomplete result",
-            "decision_brief": {
-                "market_summary": "Only one field present.",
-                "confidence": "medium",
-            },
+            "decision_brief": deepcopy(LLM_SCHEMA_FAILURE_SAMPLE),
         },
     )
 
@@ -162,6 +212,21 @@ def test_strategy_agent_llm_assisted_falls_back_on_missing_fields(monkeypatch) -
     assert result["strategy_execution_mode"] == STRATEGY_MODE_RULE_BASED_FALLBACK
     assert result["llm_parse_status"] == LLM_PARSE_STATUS_FALLBACK
     assert result["llm_fallback_reason"] == "schema_validation_failed"
+    assert result["strategy"]
+    assert result["decision_brief"]["confidence"] in {"high", "medium", "low"}
+
+
+def test_validate_and_normalize_brief_regression_asset() -> None:
+    """A successful parsed object should normalize into a stable regression asset."""
+    normalized = _validate_and_normalize_brief(deepcopy(LLM_NORMALIZATION_INPUT_SAMPLE))
+
+    assert normalized == LLM_NORMALIZATION_EXPECTED_SAMPLE
+
+
+def test_validate_and_normalize_brief_rejects_schema_failure_asset() -> None:
+    """A broken parsed object should fail strict schema validation."""
+    with pytest.raises(ValueError, match="missing required keys"):
+        _validate_and_normalize_brief(deepcopy(LLM_SCHEMA_FAILURE_SAMPLE))
 
 
 def test_strategy_agent_llm_assisted_falls_back_on_invalid_confidence(monkeypatch) -> None:
