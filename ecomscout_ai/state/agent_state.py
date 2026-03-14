@@ -11,6 +11,7 @@ class AgentState(TypedDict):
     crawl_fields: list
     crawl_depth: int
     crawl_limit: int
+    crawl_status: str
     products: list
     clean_data: list
     analysis_result: dict

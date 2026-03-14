@@ -12,6 +12,7 @@ def build_initial_state(user_query: str) -> AgentState:
         "crawl_fields": [],
         "crawl_depth": 1,
         "crawl_limit": 20,
+        "crawl_status": "failed",
         "products": [],
         "clean_data": [],
         "analysis_result": {},

@@ -1,6 +1,9 @@
 """Unit tests for the Amazon crawler provider parsing helpers."""
 
+from requests import HTTPError
+
 from ecomscout_ai.crawlers.providers.amazon_provider import (
+    AmazonProvider,
     parse_product_detail_html,
     parse_search_results_html,
 )
@@ -20,6 +23,14 @@ SEARCH_HTML = """
       <span class="a-price"><span class="a-offscreen">$249.00</span></span>
       <i class="a-icon-star-small"><span class="a-icon-alt">4.4 out of 5 stars</span></i>
       <span class="a-size-base s-underline-text">1,850</span>
+    </div>
+    <div data-component-type="s-search-result">
+      <span>Sponsored</span>
+      <h2><a href="/sponsored-product"><span>Sponsored Product</span></a></h2>
+      <span class="a-price"><span class="a-offscreen">$159.00</span></span>
+    </div>
+    <div data-component-type="s-search-result">
+      <h2><a href="/missing-price"><span>Missing Price Product</span></a></h2>
     </div>
   </body>
 </html>
@@ -72,3 +83,58 @@ def test_parse_product_detail_html_extracts_brand_bsr_and_category() -> None:
         "bsr": "#128 in Electronics",
         "category": "Electronics",
     }
+
+
+class FakeClient:
+    """Simple client stub used to control crawler responses."""
+
+    def __init__(self, responses: dict[str, str] | None = None, error_urls: set[str] | None = None):
+        self.responses = responses or {}
+        self.error_urls = error_urls or set()
+
+    def fetch_text(self, url: str) -> str:
+        if url in self.error_urls:
+            raise HTTPError(f"blocked url: {url}")
+        if url not in self.responses:
+            raise HTTPError(f"missing url: {url}")
+        return self.responses[url]
+
+
+def test_amazon_provider_uses_fallback_only_after_real_attempt_fails() -> None:
+    """The provider should attempt a live crawl first and fall back on failure."""
+    provider = AmazonProvider(client=FakeClient(error_urls={"https://www.amazon.com/s?k=bluetooth+earphone"}))
+
+    result = provider.fetch_products(
+        keyword="bluetooth earphone",
+        fields=["name", "price", "rating", "reviews", "url"],
+        depth=1,
+        limit=3,
+    )
+
+    assert result["crawl_status"] == "fallback"
+    assert len(result["products"]) == 3
+    assert result["products"][0]["url"].endswith("mock-product-a")
+
+
+def test_amazon_provider_marks_partial_success_when_detail_fetch_fails() -> None:
+    """The provider should keep live products and mark partial success if details fail."""
+    search_url = "https://www.amazon.com/s?k=bluetooth+earphone"
+    detail_url = "https://www.amazon.com/product-a"
+    provider = AmazonProvider(
+        client=FakeClient(
+            responses={search_url: SEARCH_HTML},
+            error_urls={detail_url},
+        )
+    )
+
+    result = provider.fetch_products(
+        keyword="bluetooth earphone",
+        fields=["name", "price", "rating", "reviews", "url", "brand", "bsr", "category"],
+        depth=2,
+        limit=2,
+    )
+
+    assert result["crawl_status"] == "partial_success"
+    assert len(result["products"]) == 2
+    assert result["products"][0]["url"] == detail_url
+    assert result["products"][0]["brand"] is None

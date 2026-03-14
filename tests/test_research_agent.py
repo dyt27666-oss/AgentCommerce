@@ -11,6 +11,7 @@ def make_state(user_query: str) -> dict:
         "crawl_fields": [],
         "crawl_depth": 1,
         "crawl_limit": 20,
+        "crawl_status": "failed",
         "products": [],
         "clean_data": [],
         "analysis_result": {},

@@ -57,11 +57,19 @@ def parse_search_results_html(html: str, limit: int) -> list[dict]:
     products: list[dict] = []
 
     for result in soup.select('div[data-component-type="s-search-result"]'):
+        card_text = result.get_text(" ", strip=True).lower()
+        if "sponsored" in card_text:
+            continue
+
         title_node = result.select_one("h2 a span")
         link_node = result.select_one("h2 a")
         price_node = result.select_one(".a-price .a-offscreen")
         rating_node = result.select_one(".a-icon-alt")
-        reviews_node = result.select_one(".s-underline-text")
+        reviews_node = (
+            result.select_one("span[aria-label*='ratings']")
+            or result.select_one(".s-underline-text")
+            or result.select_one("a[href*='#customerReviews'] span")
+        )
 
         name = _extract_text(title_node)
         price = _clean_price(_extract_text(price_node))
@@ -119,7 +127,7 @@ class AmazonProvider:
         fields: list[str],
         depth: int,
         limit: int,
-    ) -> list[dict]:
+    ) -> dict:
         """Fetch normalized Amazon products for the given crawl parameters."""
         try:
             search_url = f"{AMAZON_BASE_URL}/s?k={quote_plus(keyword)}"
@@ -128,20 +136,28 @@ class AmazonProvider:
             if not products:
                 raise ValueError("No products parsed from Amazon search results")
 
+            crawl_status = "success"
             if depth >= 2 and any(field in fields for field in ("brand", "bsr", "category")):
-                self._enrich_product_details(products)
+                detail_failures = self._enrich_product_details(products)
+                if detail_failures:
+                    crawl_status = "partial_success"
 
-            return products[:limit]
+            return {"products": products[:limit], "crawl_status": crawl_status}
         except Exception:
-            return self._fallback_products(keyword, depth, limit)
+            fallback_products = self._fallback_products(keyword, depth, limit)
+            if fallback_products:
+                return {"products": fallback_products, "crawl_status": "fallback"}
+            return {"products": [], "crawl_status": "failed"}
 
-    def _enrich_product_details(self, products: list[dict]) -> None:
+    def _enrich_product_details(self, products: list[dict]) -> int:
+        failures = 0
         for product in products[:DETAIL_FETCH_LIMIT]:
             try:
                 detail_html = self.client.fetch_text(product["url"])
                 product.update(parse_product_detail_html(detail_html))
             except Exception:
-                continue
+                failures += 1
+        return failures
 
     def _fallback_products(self, keyword: str, depth: int, limit: int) -> list[dict]:
         seed = keyword.title() or "Amazon Product"
