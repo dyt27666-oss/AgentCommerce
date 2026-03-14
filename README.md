@@ -145,7 +145,8 @@ If `llm_assisted` is enabled and the model output cannot be parsed or validated,
 The current minimum `.env` shape is:
 
 ```env
-OPENAI_API_KEY=
+SILRA_API_KEY=
+SILRA_MODEL=glm-4.7
 ```
 
 You can copy from `.env.example` when testing the LLM-assisted strategy path.

@@ -19,14 +19,20 @@ Copy-Item .env.example .env
 2. Fill in the minimum required value in `.env`:
 
 ```env
-OPENAI_API_KEY=your_real_key
+SILRA_API_KEY=your_real_key
 ```
 
 Optional:
 
 ```env
-OPENAI_MODEL=gpt-4o-mini
+SILRA_MODEL=glm-4.7
 ```
+
+The current implementation will try these compatible base URLs in order:
+
+1. `https://api.silra.cn`
+2. `https://api.silra.cn/v1`
+3. `https://api.silra.cn/v1/chat/completions`
 
 If you do not enable `llm_assisted`, you can leave `.env` unused.
 

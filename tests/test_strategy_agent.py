@@ -9,6 +9,8 @@ from ecomscout_ai.agents.strategy_agent import (
     STRATEGY_MODE_RULE_BASED_FALLBACK,
     DEFAULT_DECISION_BRIEF,
     _extract_json_object,
+    _get_llm_config,
+    _get_llm_endpoint_candidates,
     strategy_agent,
 )
 
@@ -217,3 +219,28 @@ def test_strategy_agent_llm_assisted_falls_back_on_unparseable_text(monkeypatch)
 
     assert result["strategy_execution_mode"] == STRATEGY_MODE_RULE_BASED_FALLBACK
     assert result["llm_fallback_reason"] == "llm_output_parse_failed"
+
+
+def test_get_llm_config_prefers_silra_defaults(monkeypatch) -> None:
+    """Silra should be the default LLM runtime path for llm_assisted."""
+    monkeypatch.delenv("SILRA_MODEL", raising=False)
+    monkeypatch.setenv("SILRA_API_KEY", "silra-key")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    config = _get_llm_config()
+
+    assert config["api_key"] == "silra-key"
+    assert config["model"] == "glm-4.7"
+
+
+def test_get_llm_endpoint_candidates_uses_required_order(monkeypatch) -> None:
+    """Silra base URLs should be attempted in the required order."""
+    monkeypatch.delenv("SILRA_BASE_URL", raising=False)
+
+    candidates = _get_llm_endpoint_candidates()
+
+    assert candidates == [
+        "https://api.silra.cn",
+        "https://api.silra.cn/v1",
+        "https://api.silra.cn/v1/chat/completions",
+    ]

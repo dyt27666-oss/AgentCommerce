@@ -27,6 +27,12 @@ DEFAULT_DECISION_BRIEF = {
     "next_actions": ["Increase data coverage before revisiting the recommendation."],
     "confidence": "low",
 }
+DEFAULT_SILRA_MODEL = "glm-4.7"
+DEFAULT_SILRA_BASE_URLS = [
+    "https://api.silra.cn",
+    "https://api.silra.cn/v1",
+    "https://api.silra.cn/v1/chat/completions",
+]
 
 
 def _clone_default_brief() -> dict:
@@ -221,24 +227,55 @@ def _extract_json_object(text: str) -> dict:
     return parsed
 
 
+def _get_llm_config() -> dict:
+    """Return the active LLM runtime configuration."""
+    api_key = os.getenv("SILRA_API_KEY") or os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("SILRA_API_KEY is not configured")
+
+    model_name = os.getenv("SILRA_MODEL") or os.getenv("OPENAI_MODEL") or DEFAULT_SILRA_MODEL
+    return {"api_key": api_key, "model": model_name}
+
+
+def _get_llm_endpoint_candidates() -> list[str]:
+    """Return the ordered list of compatible Silra base URLs to try."""
+    custom_base = os.getenv("SILRA_BASE_URL")
+    if custom_base:
+        return [custom_base]
+    return DEFAULT_SILRA_BASE_URLS.copy()
+
+
 def _run_llm_assisted_strategy(state: AgentState) -> dict:
     """Run the LLM-assisted strategy generation."""
     from langchain_openai import ChatOpenAI
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not configured")
-
-    model_name = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    config = _get_llm_config()
     prompt = _build_llm_prompt(state)
-    model = ChatOpenAI(model=model_name, temperature=0)
-    response = model.invoke(prompt)
-    content = getattr(response, "content", "")
-    if isinstance(content, list):
-        content = "".join(
-            part.get("text", "") if isinstance(part, dict) else str(part)
-            for part in content
-        )
+    last_error: Exception | None = None
+    content = ""
+
+    for base_url in _get_llm_endpoint_candidates():
+        try:
+            model = ChatOpenAI(
+                model=config["model"],
+                api_key=config["api_key"],
+                base_url=base_url,
+                temperature=0,
+            )
+            response = model.invoke(prompt)
+            content = getattr(response, "content", "")
+            if isinstance(content, list):
+                content = "".join(
+                    part.get("text", "") if isinstance(part, dict) else str(part)
+                    for part in content
+                )
+            last_error = None
+            break
+        except Exception as exc:
+            last_error = exc
+
+    if last_error is not None:
+        raise RuntimeError(f"Silra invocation failed across all endpoints: {last_error}") from last_error
 
     parsed = _extract_json_object(str(content))
     brief = _validate_and_normalize_brief(parsed)
