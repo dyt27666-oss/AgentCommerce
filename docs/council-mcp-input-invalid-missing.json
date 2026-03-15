@@ -1,0 +1,37 @@
+{
+  "council_brief": {
+    "brief_id": "council-poc-brief-001",
+    "scope": [
+      "docs-only wording update"
+    ],
+    "non_goals": [
+      "no code edits"
+    ],
+    "touched_files": [
+      "docs/llm-assisted.md"
+    ],
+    "acceptance_criteria": [
+      "instructions are clear"
+    ],
+    "validation_steps": [
+      "git status --short --branch"
+    ],
+    "delivery_format": [
+      "change summary"
+    ]
+  },
+  "codex_execution_request": {
+    "request_id": "exec-req-001",
+    "brief_id": "council-poc-brief-001",
+    "execution_brief": {
+      "owner_intent": "Clarify docs"
+    },
+    "repo_context": {
+      "repo": "AgentCommerce",
+      "branch": "main"
+    },
+    "constraints": [
+      "do not change workflow graph"
+    ]
+  }
+}

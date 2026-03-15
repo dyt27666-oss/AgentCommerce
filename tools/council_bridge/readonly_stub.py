@@ -118,6 +118,26 @@ def build_codex_ready_payload(data: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def export_dry_run_result(input_path: str, output_path: str) -> dict[str, Any]:
+    """Run readonly dry-run flow and export structured result to JSON file."""
+    try:
+        data = load_input(input_path)
+        result = build_codex_ready_payload(data)
+    except Exception as exc:
+        result = {
+            "status": "invalid_input",
+            "request_id": None,
+            "brief_id": None,
+            "codex_ready_payload": None,
+            "errors": [f"runtime_error: {exc}"],
+        }
+
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    return result
+
+
 def _is_non_empty_str(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
@@ -163,21 +183,17 @@ def main() -> None:
         default=str(Path("docs") / "council-mcp-input-sample.json"),
         help="Path to Council MCP input JSON file.",
     )
+    parser.add_argument(
+        "--output",
+        default=str(Path("artifacts") / "council_bridge_dry_run.json"),
+        help="Path to exported dry-run JSON result file.",
+    )
     args = parser.parse_args()
 
-    try:
-        data = load_input(args.input)
-        result = build_codex_ready_payload(data)
-    except Exception as exc:  # pragma: no cover
-        result = {
-            "status": "invalid_input",
-            "request_id": None,
-            "brief_id": None,
-            "codex_ready_payload": None,
-            "errors": [f"runtime_error: {exc}"],
-        }
+    result = export_dry_run_result(args.input, args.output)
 
     print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(f"\n[readonly-stub] dry-run result exported to: {args.output}")
 
 
 if __name__ == "__main__":
