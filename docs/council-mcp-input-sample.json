@@ -1,0 +1,74 @@
+{
+  "council_brief": {
+    "brief_id": "council-poc-brief-001",
+    "owner_intent": "Clarify llm_assisted usage instructions without changing runtime behavior.",
+    "scope": [
+      "docs-only wording update",
+      "keep workflow and business logic unchanged"
+    ],
+    "non_goals": [
+      "no code edits",
+      "no orchestration features",
+      "no bridge implementation"
+    ],
+    "touched_files": [
+      "docs/llm-assisted.md",
+      "README.md"
+    ],
+    "acceptance_criteria": [
+      "instructions are step-ordered and concise",
+      "success/fallback check fields are explicit",
+      "wording does not claim automated council is implemented"
+    ],
+    "validation_steps": [
+      "git status --short --branch",
+      "confirm only scoped docs files changed"
+    ],
+    "delivery_format": [
+      "change summary",
+      "changed files",
+      "git status",
+      "next-step recommendation"
+    ]
+  },
+  "codex_execution_request": {
+    "request_id": "exec-req-001",
+    "brief_id": "council-poc-brief-001",
+    "execution_brief": {
+      "owner_intent": "Clarify llm_assisted usage instructions without changing runtime behavior.",
+      "scope": [
+        "docs-only wording update"
+      ],
+      "non_goals": [
+        "no code edits"
+      ],
+      "touched_files": [
+        "docs/llm-assisted.md",
+        "README.md"
+      ],
+      "acceptance_criteria": [
+        "instructions are step-ordered and concise",
+        "success/fallback check fields are explicit"
+      ],
+      "validation_steps": [
+        "git status --short --branch",
+        "confirm only scoped docs files changed"
+      ],
+      "delivery_format": [
+        "change summary",
+        "changed files",
+        "git status",
+        "next-step recommendation"
+      ]
+    },
+    "repo_context": {
+      "repo": "AgentCommerce",
+      "branch": "main"
+    },
+    "constraints": [
+      "do not change workflow graph",
+      "do not edit strategy_agent/crawler/graph/tests",
+      "do not add new runtime features"
+    ]
+  }
+}
