@@ -1,135 +1,107 @@
 ﻿# Final Delivery Report v1（Phase 6.5 ~ 7.1）
 
-## 目录
-
-1. 交付范围
-2. 已完成模块总表
-3. 模块级交付明细（目标/实现/边界/测试）
-4. 全量测试与证据
-5. 完成度评估
-6. Remaining Gaps
-7. Phase 7.2 / Phase 8 候选方向
-
 ## 1. 交付范围
 
-本报告覆盖 AgentCommerce 从 Phase 6.5 到 Phase 7.1 的工程交付，重点是：
+本报告覆盖 Phase 6.5 ~ 7.1 的工程化交付收口，目标是形成可展示、可审计、可持续迭代的 v1 文档与证据包。
 
-- 治理配置与发布能力
-- 运行时失败恢复闭环
-- 指标观测扩展
-
-不包含：UI、分布式队列、HA、多租户复杂编排。
+边界：本轮不新增核心运行时能力，不改 router/publish FSM/execution gate/recovery 主逻辑。
 
 ## 2. 已完成模块总表
 
-| 阶段 | 模块 | 状态 |
-|---|---|---|
-| Phase 6.5 | T1 Scope Validator Core | 完成 |
-| Phase 6.5 | T2 Router Observe Integration | 完成 |
-| Phase 6.5 | T3 Policy Publish FSM | 完成 |
-| Phase 6.5 | T4 Alias Version Gate | 完成 |
-| Phase 6.5 | T5 Incremental Event Log | 完成 |
-| Phase 6.5 | T6 Metrics Snapshot Job | 完成 |
-| Phase 7.1 | A Failure Event Normalizer | 完成 |
-| Phase 7.1 | B Recovery Attempt Runner | 完成 |
-| Phase 7.1 | C Publish Failure Reconcile Hook | 完成 |
-| Phase 7.1 | D Event Log Degradation Recovery | 完成 |
-| Phase 7.1 | E Recovery Metrics Extension | 完成 |
+| 阶段 | 模块 | 目标 | 状态 |
+|---|---|---|---|
+| Phase 6.5 | T1 Scope Validator Core | scope 完整性校验（strict/lenient） | 完成 |
+| Phase 6.5 | T2 Router Scope Observe | router 接入 scope 校验结果（observe-only） | 完成 |
+| Phase 6.5 | T3 Policy Publish FSM | propose/review/confirm/apply/rollback 发布链路 | 完成 |
+| Phase 6.5 | T4 Alias Version Gate | apply 前语义回归门禁 | 完成 |
+| Phase 6.5 | T5 Incremental Event Log | 增量事件写入、去重、快照基础 | 完成 |
+| Phase 6.5 | T6 Metrics Snapshot Job | 周期快照与 fallback 聚合 | 完成 |
+| Phase 7.1 | A Failure Event Normalizer | 运行时失败标准化 | 完成 |
+| Phase 7.1 | B Recovery Attempt Runner | 最小恢复尝试与审计 | 完成 |
+| Phase 7.1 | C Publish Reconcile Hook | publish 半提交对账 | 完成 |
+| Phase 7.1 | D Event Log Degradation Recovery | ingest 降级队列与 replay | 完成 |
+| Phase 7.1 | E Recovery Metrics Extension | recovery 指标纳入 snapshot | 完成 |
 
-## 3. 模块级交付明细
+## 3. 模块级交付明细（目标 / 实现 / 边界 / 测试证据）
 
-### 3.1 Scope Validator / Router Observe
+| 模块 | 目标 | 实现文件 | 边界约束 | 测试证据 |
+|---|---|---|---|---|
+| Scope Validator Core | 统一 scope 校验结果结构 | `tools/council_bridge/scope_validator.py` | 不在本阶段做 router strict 阻断 | `tests/test_scope_validator.py` |
+| Router Scope Observe | 在 router 记录 scope validation | `tools/council_bridge/feishu_message_router.py` | observe-only，不改变路由决策 | `tests/test_feishu_router_scope_validation_observe.py` |
+| Policy Publish FSM | 发布状态机与可追溯产物 | `tools/council_bridge/policy_publish_fsm.py` | 不扩 execution 权限 | `tests/test_policy_publish_fsm.py` |
+| Alias Version Gate | 发布前语义回归 | `tools/council_bridge/alias_semantic_regression_suite.py` | 不修改 normalization 算法 | `tests/test_alias_regression_gate.py` |
+| Incremental Event Log | 增量治理事件沉淀 | `tools/council_bridge/governance_event_log.py` | 保留 full scan fallback | `tests/test_governance_event_log.py` |
+| Metrics Snapshot Job | 周期快照汇总 | `tools/council_bridge/governance_metrics_snapshot_job.py` | 非 UI、非服务化 | `tests/test_governance_metrics_snapshot_job.py` |
+| Failure Event Normalizer | 失败类型/阶段标准化 | `tools/council_bridge/runtime_failure_event_normalizer.py` | 不执行业务恢复动作 | `tests/test_runtime_failure_event_normalizer.py` |
+| Recovery Attempt Runner | 最小 retry/ignore/manual_required | `tools/council_bridge/runtime_recovery_attempt_runner.py` | 不做自动 rollback/reconcile | `tests/test_runtime_recovery_attempt_runner.py` |
+| Publish Reconcile Hook | 检测 publish 半提交不一致 | `tools/council_bridge/runtime_publish_reconcile_hook.py` | 只读对账，不自动修复 | `tests/test_runtime_publish_reconcile_hook.py` |
+| Event Log Degradation Recovery | ingest 失败降级与补写 | `tools/council_bridge/runtime_event_log_degradation_recovery.py` | 非通用队列系统 | `tests/test_runtime_event_log_degradation_recovery.py` |
+| Recovery Metrics Extension | 增加恢复质量指标 | `tools/council_bridge/governance_metrics_snapshot_job.py`、`tools/council_bridge/incremental_metrics_snapshot.py` | 不改变治理主流程 | `tests/test_recovery_metrics_extension.py` |
 
-- 目标：scope completeness 与 observe-only 路由集成。
-- 实现：`scope_validator.py` + router 增量字段。
-- 边界：不阻断主路由（observe 模式）。
-- 测试证据：`tests/test_scope_validator.py`、`tests/test_feishu_router_scope_validation_observe.py`。
+## 4. 交付产物与样例证据
 
-### 3.2 Policy Publish FSM + Alias Gate
+1. 发布相关样例：`docs/policy_publish_samples_v0.1/`
+2. 事件与快照样例：`docs/governance_event_samples_v0.1/`、`docs/governance_metrics_snapshot_recovery_extended.json`
+3. 恢复相关样例：
+   - `docs/runtime_failure_samples_v0.1/`
+   - `docs/runtime_recovery_samples_v0.1/`
+   - `docs/runtime_reconcile_samples_v0.1/`
+   - `docs/runtime_event_log_degradation_samples_v0.1/`
+4. scope 与 router observe 样例：`docs/scope_validator_samples_v0.1/`、`docs/router_scope_validation_samples_v0.1/`
 
-- 目标：发布链路可审计、可回滚、可门禁。
-- 实现：`policy_publish_fsm.py`、`alias_semantic_regression_suite.py`。
-- 边界：不改 router/execution gate；不自动越权。
-- 测试证据：`tests/test_policy_publish_fsm.py`、`tests/test_alias_regression_gate.py`。
+## 5. 总测试结果汇总
 
-### 3.3 Incremental Event Log / Snapshot
+- 全量回归命令：`py -m pytest -q`
+- 最近结果：`331 passed`
 
-- 目标：增量事件沉淀与周期快照。
-- 实现：`governance_event_log.py`、`governance_metrics_snapshot_job.py`。
-- 边界：不替代 full scan，保留 fallback。
-- 测试证据：`tests/test_governance_event_log.py`、`tests/test_governance_metrics_snapshot_job.py`。
+该结果证明：
 
-### 3.4 Runtime Failure Normalization
+1. Phase 6.5 ~ 7.1 新增模块与主干流程保持兼容。
+2. recovery 链路各子模块具备最小可验证行为。
+3. 未观察到对既有 publish/router/execution gate 语义的回归。
 
-- 目标：统一 runtime failure schema。
-- 实现：`runtime_failure_event_normalizer.py`。
-- 边界：不执行恢复动作。
-- 测试证据：`tests/test_runtime_failure_event_normalizer.py`。
+当前未完全证明：
 
-### 3.5 Recovery Attempt Runner
+1. 多进程并发下的 event/replay 一致性。
+2. 分布式部署场景下的故障恢复时序稳定性。
 
-- 目标：最小恢复尝试编排与审计。
-- 实现：`runtime_recovery_attempt_runner.py`。
-- 边界：不做自动 rollback/reconcile。
-- 测试证据：`tests/test_runtime_recovery_attempt_runner.py`。
+## 6. 完成度评估
 
-### 3.6 Publish Failure Reconcile Hook
+1. 治理主干完成度：高（状态机、门禁、发布、审计完整）。
+2. 运行时恢复完成度：中高（failure/recovery/reconcile/degradation/metrics 闭环已具备）。
+3. 平台展示完成度：中（文档体系可展示，尚未有 UI）。
 
-- 目标：识别 publish 半提交与状态不一致。
-- 实现：`runtime_publish_reconcile_hook.py`。
-- 边界：只读对账，不自动修复。
-- 测试证据：`tests/test_runtime_publish_reconcile_hook.py`。
+结论：可视为 AgentCommerce v1 正式收口完成（工程化治理版本）。
 
-### 3.7 Event Log Degradation Recovery
+## 7. Remaining Gaps
 
-- 目标：ingest 失败队列化、补写与状态迁移。
-- 实现：`runtime_event_log_degradation_recovery.py`。
-- 边界：非通用任务队列，不改业务 artifact。
-- 测试证据：`tests/test_runtime_event_log_degradation_recovery.py`。
+1. 尚无统一运维控制台，恢复动作仍偏工具化。
+2. 缺少可视化 dashboard（目前依赖 artifact 与 snapshot 文件）。
+3. 恢复策略为保守最小集，未形成策略编排引擎。
+4. 未实现分布式调度与 HA 保障。
 
-### 3.8 Recovery Metrics Extension
+## 8. 风险与非目标
 
-- 目标：将 recovery 维度纳入 snapshot。
-- 实现：`governance_metrics_snapshot_job.py` 升级为 v0.2。
-- 边界：不改治理主流程，不做 UI。
-- 测试证据：`tests/test_recovery_metrics_extension.py`。
+### 8.1 主要风险
 
-## 4. 全量测试与证据
+1. 人工确认链路较长，吞吐受限。
+2. event log 依赖文件级机制，规模化前需要演进。
+3. 语义词典扩展时需持续回归门禁，避免 intent 漂移。
 
-- 最近全量执行：`py -m pytest -q`
-- 结果：`331 passed`
-- 结论：Phase 6.5 ~ 7.1 相关新增能力已通过回归验证。
+### 8.2 明确非目标
 
-## 5. 当前完成度评估
+1. 不将 chat lane 赋予审批或执行语义。
+2. 不绕过 apply gate / dispatch gate。
+3. 不把 recovery 模块升级为自动修复器（当前仅审计与保守恢复）。
 
-### 完成度（v1）
+## 9. 下一阶段建议
 
-- 治理主干：高（已具备状态、门禁、审计、发布）。
-- 运行时恢复：中高（已具备失败标准化、恢复尝试、对账、降级补写、指标）。
-- 平台可视化：低（尚未建设 UI 层）。
+### Phase 7.2 候选
 
-评估结论：
+- 恢复策略编排与 runbook 标准化。
+- 恢复 SLA 指标（MTTR、manual load、abandonment）与告警阈值。
 
-- 可视为“治理型 v1 交付包”完成。
-- 可对外展示工程化治理能力，但不应宣称已具备企业级 HA/分布式调度。
+### Phase 8 候选
 
-## 6. Remaining Gaps
-
-1. 缺少统一运维入口（恢复动作仍偏工具化）。
-2. 无可视化治理面板（仅 artifact/event/snapshot 文件）。
-3. 恢复策略仍为保守最小集，未形成策略编排引擎。
-4. 缺少跨团队发布审批流的组织级能力。
-
-## 7. Phase 7.2 / Phase 8 候选方向
-
-### Phase 7.2（建议）
-
-- Recovery policy 编排与操作手册化
-- 恢复闭环 SLA 指标（MTTR、abandon ratio、manual load）
-- 审计证据包自动收敛（release-ready pack）
-
-### Phase 8（建议）
-
-- 项目展示包装与对外说明页
-- 轻量可视化（只读 dashboard）
-- 跨 workspace/project 策略包治理
+- 项目展示包装（截图、对外介绍、作品集化）。
+- 轻量可视化读层（只读，不改治理主路径）。

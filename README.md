@@ -1,45 +1,52 @@
 ﻿# AgentCommerce v1
 
-AgentCommerce 是一个以飞书为控制台、以 Council 为策略层、以 Codex/CLI 为执行层、以 Artifact 为治理核心的人类在环（HITL）AI 协作操作系统。
-
-## 项目简介
-
-本项目当前聚焦“治理型协作”而不是“通用聊天助手”：
-
-- 把任务拆分为 `Chat / Council / Execution` 三条 lane。
-- 用统一 artifact 作为状态、审批、执行和复盘的唯一可信载体。
-- 在 owner 明确确认下推进状态迁移和执行触发。
-- 通过 event log + snapshot 指标实现可观测、可审计、可恢复。
+一句话定位：AgentCommerce 是一个以 Feishu 为控制台、以 Council 为策略层、以 Execution 为执行层、以 Artifact 为治理核心的人类在环（HITL）AI 协作操作系统。
 
 ## 为什么不是普通 Agent Demo
 
-普通 demo 往往只有“输入 -> 大模型 -> 输出”。AgentCommerce 的核心差异是：
+普通 Agent Demo 关注“模型是否能回答”；AgentCommerce 关注“系统是否可治理、可审计、可恢复”。
 
-1. `HITL`：关键动作必须 owner 明确确认。
-2. `Artifact-first`：关键行为都落地结构化产物，而非只看 stdout。
-3. `Governance over automation`：优先可监督、可追踪、可回放。
-4. `Gate-based execution`：批准不等于执行，执行必须经过独立 gate。
+核心差异：
 
-## 系统架构总览
+1. `Artifact-first`：关键行为必须落地结构化产物，不依赖口头状态。
+2. `HITL`：关键迁移与执行触发需要 owner 明确确认。
+3. `Explicit gate control`：状态迁移 gate、publish gate、execution gate 分层控制。
+4. `Governance over automation`：优先可追踪、可复盘、可安全失败，而非盲目自动化。
 
-```text
-Human Owner (Feishu)
-  -> Feishu Control Layer
-  -> Bridge Governance Layer
-      -> Chat Lane
-      -> Council Lane
-      -> Execution Lane
-  -> Artifact & Audit Layer
-  -> Governance Event Log & Snapshot Metrics
-  -> Runtime Failure Recovery Layer
+## 核心能力清单（v1）
+
+1. Council 统一 schema 与状态机（plan/risk/review/decision/handoff）。
+2. Feishu feedback mapping + owner intent normalization（保守映射）。
+3. owner-confirmed apply 与 owner-confirmed execution dispatch。
+4. policy publish FSM + alias semantic regression gate。
+5. governance event log + metrics snapshot（含 recovery metrics）。
+6. runtime failure/recovery/reconcile/degradation recovery 闭环。
+
+## 系统总览架构
+
+```mermaid
+flowchart TD
+    A["Human Owner"] --> B["Feishu Control Layer"]
+    B --> C["Bridge Governance Layer"]
+    C --> C1["Chat Lane"]
+    C --> C2["Council Multi-Agent Layer"]
+    C --> C3["Execution Layer"]
+    C1 --> D["Artifact & Audit Layer"]
+    C2 --> D
+    C3 --> D
+    D --> E["Governance Event Log"]
+    E --> F["Metrics Snapshot"]
+    E --> G["Runtime Failure Recovery"]
+    G --> D
 ```
 
-关键实现目录：
+关键模块（真实文件）：
 
 - `tools/council_bridge/feishu_message_router.py`
-- `tools/council_bridge/council_artifact_schema.py`
 - `tools/council_bridge/council_artifact_state_machine.py`
 - `tools/council_bridge/policy_publish_fsm.py`
+- `tools/council_bridge/execution_handoff_gate.py`
+- `tools/council_bridge/owner_confirmed_execution_dispatch.py`
 - `tools/council_bridge/governance_event_log.py`
 - `tools/council_bridge/governance_metrics_snapshot_job.py`
 - `tools/council_bridge/runtime_failure_event_normalizer.py`
@@ -49,76 +56,58 @@ Human Owner (Feishu)
 
 ## 核心流程（Feishu -> Council -> Owner -> Execution/Audit）
 
-```text
-Owner 在 Feishu 发起任务
-  -> Router 进入 Council 路径（可 observe）
-  -> Council 生成/修订 artifact
-  -> Owner 反馈与确认（needs_fix/revise/approve）
-  -> 状态机校验 + owner-confirmed apply
-  -> handoff gate 校验
-  -> owner-confirmed execution dispatch
-  -> execution receipt + audit artifacts
-  -> event log + snapshot 指标
-```
+1. owner 在 Feishu 提出任务或反馈。
+2. Bridge Governance Layer 完成 ingress、scope observe、intent normalization。
+3. Council Multi-Agent Layer 产出或修订 artifact。
+4. owner 在 Feishu 给出审批意见（needs_fix/revise/approved/rejected）。
+5. 状态机进行 validate；仅在 owner-confirmed 条件下 apply。
+6. handoff artifact 通过 execution handoff gate。
+7. 仅在明确 dispatch 协议下触发 Execution Layer。
+8. 产出 execution receipt、governance events、metrics snapshot。
+9. 若失败，进入 Runtime Failure Recovery 闭环并补齐审计证据。
 
-## Governance 与 Runtime Recovery 能力
+最典型端到端流程见：[Example Flow v1](docs/example-flow-v1.md)。
 
-### 治理能力（已实现）
+## Governance 与 Runtime Failure Recovery
 
-- Council 统一 schema（plan/risk/review/decision/handoff）
-- 状态迁移校验器（最小合法迁移 + 上下文约束）
-- Feishu feedback mapping（保守映射）
-- owner-confirmed apply transition
-- execution handoff gate / dispatch protocol
-- policy publish FSM + alias version gate
+治理能力（已实现）：
 
-### 运行时恢复能力（已实现）
+- Scope Validator（observe mode）与 router 集成。
+- Policy Publish FSM（proposed/review/confirmed/applied/rejected/rolled_back）。
+- Alias Version Gate（发布前语义回归门禁）。
+- execution gate 与 dispatch 协议隔离（handoff_ready 不等于自动执行）。
 
-- runtime failure 标准化
-- recovery attempt（有限 retry / ignore / manual_required）
-- publish failure reconcile hook（只读对账）
-- event log degradation queue + replay
-- recovery metrics extension（v0.2 snapshot）
+运行时恢复能力（已实现）：
 
-## 核心原则
+- `runtime_failure_event` 标准化。
+- `runtime_recovery_attempt` 最小重试与人工介入记录。
+- `runtime_reconcile_report` 发布半提交对账。
+- `runtime_event_log_degradation` 降级队列与 replay。
+- recovery metrics 扩展到 `governance_metrics_snapshot`。
 
-- `Artifact-first`
-- `Human-in-the-loop`
-- `Lane boundary`（Chat 不等于审批，Council 不直接执行）
-- `Gate & policy enforcement`
-- `Auditability`
+## 当前完成状态（Phase 6.5 ~ 7.1）
 
-## 当前完成状态
+- Phase 6.5 P1：T1~T6 已完成。
+- Phase 7.1：A~E 已完成。
+- 最近全量回归：`py -m pytest -q`，`331 passed`。
 
-### Phase 6.5（P1）
+## 明确边界（当前未实现）
 
-- T1 Scope Validator Core：完成
-- T2 Router Observe Integration：完成
-- T3 Policy Publish FSM：完成
-- T4 Alias Version Gate：完成
-- T5 Incremental Governance Event Log：完成
-- T6 Metrics Snapshot Job：完成
-
-### Phase 7.1
-
-- A Failure Event Normalizer：完成
-- B Recovery Attempt Runner：完成
-- C Publish Failure Reconcile Hook：完成
-- D Event Log Degradation Recovery：完成
-- E Recovery Metrics Extension：完成
-
-最新回归：`py -m pytest -q` 通过（331 tests）。
+1. 未实现治理 UI 面板。
+2. 未实现分布式调度与复杂多进程一致性。
+3. 未实现 HA/多活容灾。
+4. 未实现自动化修复编排引擎（当前为保守恢复策略）。
 
 ## 文档入口
 
-- [文档导航](docs/index.md)
+- [Docs Index](docs/index.md)
 - [Architecture v1](docs/architecture-v1.md)
 - [Final Delivery Report v1](docs/final-delivery-report-v1.md)
 
-## 后续 Roadmap（Phase 7+）
+## Roadmap（Phase 7.2 / 8）
 
-1. Phase 7.2：运行时治理深化（恢复策略编排、证据链收敛、操作手册）。
-2. Phase 8：平台化增强（版本治理、跨项目策略包、可展示层与对外交付标准化）。
+1. Phase 7.2：恢复策略编排与 runbook，提升 MTTR 与人工操作一致性。
+2. Phase 8：对外展示包装与轻量可视化，形成可复用交付模板。
 
 ## 快速开始
 
@@ -127,4 +116,4 @@ py -m pip install -r requirements.txt
 py -m pytest -q
 ```
 
-如需查看治理/恢复样例，请参阅 `docs/*_samples_v0.1/` 与 recovery snapshot 样例。
+样例可见：`docs/*_samples_v0.1/`、`docs/governance_metrics_snapshot_recovery_extended.json`。
