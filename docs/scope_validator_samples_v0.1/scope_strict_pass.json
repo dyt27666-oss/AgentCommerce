@@ -1,0 +1,14 @@
+﻿{
+  "mode": "strict",
+  "is_valid": true,
+  "errors": [],
+  "warnings": [],
+  "degraded_fields": [],
+  "normalized_scope": {
+    "workspace_id": "ws_alpha",
+    "project_id": "pj_market",
+    "policy_scope": "default>workspace:ws_alpha>project:pj_market",
+    "alias_scope": "default>workspace:ws_alpha>project:pj_market"
+  },
+  "action": "pass"
+}

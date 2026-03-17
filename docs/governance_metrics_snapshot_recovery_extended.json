@@ -1,0 +1,44 @@
+﻿{
+  "artifact_type": "governance_metrics_snapshot",
+  "schema_version": "governance.metrics.v0.2",
+  "generated_at": "2026-03-18T01:20:00+08:00",
+  "source_mode": "incremental",
+  "metrics": {
+    "scope_validation": {"pass": 3, "blocked": 1, "degraded": 2},
+    "router_scope_observe": {"observed": 5, "warnings": 2, "invalid_scope": 1},
+    "policy_publish": {"applied": 2, "rejected": 1, "rolled_back": 1},
+    "runtime_failure": {
+      "total": 4,
+      "by_failure_type": {"artifact_write_failure": 2, "event_log_write_failure": 2},
+      "by_failure_stage": {"artifact_write": 2, "event_ingest": 2}
+    },
+    "runtime_recovery_attempt": {"total": 3, "success": 1, "failed_retryable": 1, "failed_terminal": 0, "ignored": 0, "manual_required": 1},
+    "runtime_reconcile": {"no_action_needed": 1, "reconciled": 1, "partially_reconciled": 0, "manual_required": 1},
+    "runtime_event_log_degradation": {"queued": 1, "replayed": 2, "replay_failed": 1, "abandoned": 0},
+    "recovery_quality": {
+      "recovery_rate": 0.3333,
+      "manual_intervention_rate": 0.3333,
+      "abandonment_rate": 0.0,
+      "replay_success_rate": 0.6667,
+      "denominator_rules": {
+        "recovery_rate": "runtime_recovery_attempt.total",
+        "manual_intervention_rate": "runtime_recovery_attempt.total",
+        "abandonment_rate": "runtime_event_log_degradation.total",
+        "replay_success_rate": "runtime_event_log_degradation.replayed + replay_failed + abandoned"
+      }
+    }
+  },
+  "by_scope": {
+    "workspace:ws_alpha|project:pj_market|owner:owner_001": {
+      "runtime_failure": {"total": 2},
+      "runtime_recovery_attempt": {"total": 2, "success": 1, "failed_retryable": 1, "failed_terminal": 0, "ignored": 0, "manual_required": 0},
+      "runtime_reconcile": {"no_action_needed": 1, "reconciled": 0, "partially_reconciled": 0, "manual_required": 1},
+      "runtime_event_log_degradation": {"queued": 0, "replayed": 1, "replay_failed": 1, "abandoned": 0}
+    }
+  },
+  "notes": [],
+  "job_stats": {
+    "event_log_path": "artifacts/governance_events.log",
+    "source_details": {"incremental_events": 20, "recovery_artifact_scan_used": false, "supplemented_categories": []}
+  }
+}

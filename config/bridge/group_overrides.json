@@ -1,0 +1,10 @@
+{
+  "oc_example_action_only": {
+    "chat_lane_enabled": false
+  },
+  "oc_example_require_mention": {
+    "chat_lane_enabled": true,
+    "chat_lane_require_mention": true
+  }
+}
+

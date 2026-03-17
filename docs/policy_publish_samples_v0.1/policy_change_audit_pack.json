@@ -1,0 +1,33 @@
+﻿{
+  "schema_version": "policy.audit.v0.1",
+  "artifact_type": "policy_change_audit_pack",
+  "publish_id": "pub-sample-001",
+  "requested_by": "owner_001",
+  "approver": "owner_001",
+  "target_scope": {
+    "scope_type": "workspace",
+    "scope_id": "ws_alpha"
+  },
+  "status": "applied",
+  "before": {
+    "active_alias_version": "owner.intent.alias.v0.1"
+  },
+  "after": {
+    "active_alias_version": "owner.intent.alias.v0.2"
+  },
+  "change_set": {
+    "active_alias_version_to": "owner.intent.alias.v0.2",
+    "active_alias_version_from": "owner.intent.alias.v0.1"
+  },
+  "impact_estimate": {
+    "method": "placeholder",
+    "estimated_owners": 0,
+    "estimated_projects": 0,
+    "note": "v0.1 placeholder estimate"
+  },
+  "timestamp": "2026-03-16T21:05:00+08:00",
+  "linked_artifacts": {
+    "request": "artifacts/policy_publish_request.json",
+    "result": "artifacts/policy_publish_result.json"
+  }
+}

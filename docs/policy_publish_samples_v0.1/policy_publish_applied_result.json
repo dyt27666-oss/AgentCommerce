@@ -1,0 +1,27 @@
+﻿{
+  "schema_version": "policy.publish.v0.1",
+  "artifact_type": "policy_publish_result",
+  "publish_id": "pub-sample-001",
+  "requested_by": "owner_001",
+  "approver": "owner_001",
+  "target_scope": {
+    "scope_type": "owner",
+    "scope_id": "owner_001"
+  },
+  "change_set": {
+    "active_alias_version_to": "owner.intent.alias.v0.2",
+    "active_alias_version_from": "owner.intent.alias.v0.1"
+  },
+  "from_status": "confirmed",
+  "status": "applied",
+  "transition_errors": [],
+  "timestamp": "2026-03-16T21:05:00+08:00",
+  "before": {
+    "active_alias_version": "owner.intent.alias.v0.1"
+  },
+  "after": {
+    "active_alias_version": "owner.intent.alias.v0.2"
+  },
+  "apply_error": "",
+  "changed_config_path": "config/policy_center/owner_overrides.json"
+}

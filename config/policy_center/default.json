@@ -1,0 +1,19 @@
+﻿{
+  "policy_version": "policy.center.v0.1",
+  "lane_switches": {
+    "chat_lane_enabled": true,
+    "chat_lane_require_mention": false,
+    "chat_lane_only_groups": [],
+    "chat_lane_blocked_groups": []
+  },
+  "alias_registry": {
+    "active_version": "owner.intent.alias.v0.1",
+    "versions": {
+      "owner.intent.alias.v0.1": "config/owner_intent_aliases.v0.1.json"
+    }
+  },
+  "scope_defaults": {
+    "policy_scope": "default",
+    "alias_scope": "default"
+  }
+}

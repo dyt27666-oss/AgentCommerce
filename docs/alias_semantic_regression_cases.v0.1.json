@@ -1,0 +1,53 @@
+﻿{
+  "suite_version": "alias.regression.cases.v0.1",
+  "cases": [
+    {
+      "case_id": "role-rework-critic-001",
+      "input": "请让 critic 重看",
+      "expected": {
+        "intent_type": "role_rework",
+        "target_role": "critic",
+        "requested_action": "recheck"
+      },
+      "priority": "P0"
+    },
+    {
+      "case_id": "section-risk-tighten-001",
+      "input": "风险分析不够，收紧一下",
+      "expected": {
+        "intent_type": "section_feedback",
+        "target_section": "risk",
+        "requested_action": "tighten"
+      },
+      "priority": "P0"
+    },
+    {
+      "case_id": "section-scope-clarify-001",
+      "input": "scope 太宽了，请写清楚",
+      "expected": {
+        "intent_type": "section_feedback",
+        "target_section": "scope",
+        "requested_action": "clarify"
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "transition-resubmit-001",
+      "input": "这个可以，重新提交给我审核",
+      "expected": {
+        "intent_type": "transition_hint",
+        "requested_action": "resubmit"
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "comment-summarize-001",
+      "input": "帮我总结一下",
+      "expected": {
+        "intent_type": "comment",
+        "requested_action": "summarize"
+      },
+      "priority": "P2"
+    }
+  ]
+}

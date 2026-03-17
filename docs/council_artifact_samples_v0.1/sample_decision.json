@@ -1,0 +1,41 @@
+﻿{
+  "artifact_type": "decision",
+  "schema_version": "council.artifact.v0.1",
+  "artifact_id": "decision-req-20260316-r1",
+  "request_id": "req-20260316-001",
+  "brief_id": "brief-20260316-001",
+  "handoff_id": null,
+  "council_round": 1,
+  "parent_artifact_id": "review-req-20260316-r1",
+  "derived_from_artifact_ids": ["plan-req-20260316-r1", "review-req-20260316-r1"],
+  "owner_id": "owner_001",
+  "chat_id": "feishu-chat-001",
+  "created_at": "2026-03-16T10:20:00+08:00",
+  "updated_at": "2026-03-16T10:20:00+08:00",
+  "produced_by_lane": "council",
+  "produced_by_role": "strategist",
+  "produced_by_roles": ["strategist", "reviewer"],
+  "status": "ready_for_owner_review",
+  "summary": "Council 收敛：先落 schema v0.1，再接状态机。",
+  "constraints": ["不在本轮实现复杂状态机"],
+  "assumptions": ["owner 接受 v0.1 先行策略"],
+  "open_questions": ["是否在 v0.2 引入 feedback type 枚举强约束"],
+  "next_action": "提交 owner 审核并等待 approved/needs_fix。",
+  "owner_feedback": [],
+  "audit_trace": [
+    {
+      "event": "decision_converged",
+      "actor": "council/strategist",
+      "at": "2026-03-16T10:20:00+08:00"
+    }
+  ],
+  "lineage": {
+    "root_request_id": "req-20260316-001"
+  },
+  "recommended_path": "采用统一顶层字段 + 五类 artifact 最小可用模型",
+  "rejected_alternatives": ["先做复杂状态机再补 schema", "只保留自由文本不做结构化"],
+  "decision_rationale": "先标准化对象可降低后续回链和审计复杂度。",
+  "tradeoffs": ["前期字段较多", "换取后续状态机实现稳定性"],
+  "confidence": 0.84,
+  "council_recommendation": "进入 owner 审核；若 needs_fix 则按 feedback 回链修订。"
+}

@@ -1,0 +1,19 @@
+﻿{
+  "event_id": "policy_publish:pub-001:applied:2026-03-17T10:10:00+08:00",
+  "event_type": "policy_publish_result",
+  "occurred_at": "2026-03-17T10:10:00+08:00",
+  "request_id": null,
+  "publish_id": "pub-001",
+  "workspace_id": null,
+  "project_id": null,
+  "owner_id": "owner_001",
+  "source_module": "policy_publish_fsm",
+  "source_artifact": "artifacts/policy_publish_result.json",
+  "status": "applied",
+  "payload_summary": {
+    "from_status": "confirmed",
+    "to_status": "applied",
+    "changed_config_path": "config/policy_center/owner_overrides.json"
+  },
+  "dedupe_key": "policy_publish_result|artifacts/policy_publish_result.json|applied|2026-03-17T10:10"
+}

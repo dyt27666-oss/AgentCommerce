@@ -1,0 +1,12 @@
+﻿{
+  "feedback_id": "fb-20260316-001",
+  "feedback_source": "feishu_message",
+  "feedback_text": "请把步骤中的 owner 审批点明确到每一步，不要只写在总结里。",
+  "feedback_type": "needs_fix",
+  "target_artifact_id": "plan-req-20260316-r1",
+  "target_section": "steps",
+  "severity": "high",
+  "requested_change": "在每个 step 增加 approval_gate 字段并说明触发条件。",
+  "resolved_status": "open",
+  "resolved_by_artifact_id": null
+}

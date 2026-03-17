@@ -1,0 +1,31 @@
+﻿{
+  "artifact_type": "alias_regression_report",
+  "schema_version": "alias.regression.v0.1",
+  "alias_version": "owner.intent.alias.v0.2",
+  "generated_at": "2026-03-17T17:22:00+08:00",
+  "summary": {
+    "total": 5,
+    "pass": 4,
+    "warn": 0,
+    "fail": 1
+  },
+  "cases": [
+    {
+      "case_id": "role-rework-critic-001",
+      "priority": "P0",
+      "result": "fail",
+      "expected": {
+        "intent_type": "role_rework",
+        "target_role": "critic",
+        "requested_action": "recheck"
+      },
+      "actual": {
+        "intent_type": "role_rework",
+        "target_role": "strategist",
+        "requested_action": "recheck"
+      }
+    }
+  ],
+  "warnings": [],
+  "gate_decision": "block_publish"
+}

@@ -1,0 +1,23 @@
+﻿{
+  "artifact_type": "runtime_recovery_attempt",
+  "schema_version": "runtime.recovery.v0.1",
+  "failure_id": "fail-dd",
+  "related_request_id": null,
+  "publish_id": null,
+  "source_module": "runtime_unknown",
+  "failure_type": "unknown_runtime_failure",
+  "failure_stage": "runtime_unknown",
+  "detected_at": "2026-03-17T21:03:00+08:00",
+  "recovery_action": "ignore",
+  "recovery_status": "completed",
+  "operator": "system",
+  "attempt_no": 1,
+  "max_attempts": 0,
+  "idempotency_key": "c4ae3e1ec0ff8f2f6f0de54d3e8ee3b2",
+  "attempt_result": "ignored",
+  "error_detail": "ignored by policy",
+  "audit_trace": {
+    "runner": "runtime_recovery_attempt_runner.v0.1",
+    "executor_mode": "stub"
+  }
+}

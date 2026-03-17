@@ -1,0 +1,31 @@
+﻿{
+  "artifact_type": "alias_regression_report",
+  "schema_version": "alias.regression.v0.1",
+  "alias_version": "owner.intent.alias.v0.2",
+  "generated_at": "2026-03-17T17:21:00+08:00",
+  "summary": {
+    "total": 5,
+    "pass": 4,
+    "warn": 1,
+    "fail": 0
+  },
+  "cases": [
+    {
+      "case_id": "section-scope-clarify-001",
+      "priority": "P1",
+      "result": "warn",
+      "expected": {
+        "intent_type": "section_feedback",
+        "target_section": "scope",
+        "requested_action": "clarify"
+      },
+      "actual": {
+        "intent_type": "section_feedback",
+        "target_section": "scope",
+        "requested_action": "tighten"
+      }
+    }
+  ],
+  "warnings": [],
+  "gate_decision": "allow_publish"
+}

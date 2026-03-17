@@ -1,0 +1,19 @@
+﻿{
+  "artifact_type": "runtime_failure_event",
+  "schema_version": "runtime.failure.v0.1",
+  "failure_id": "fail-11111111111111111111111111111111",
+  "related_request_id": "req-router-001",
+  "publish_id": null,
+  "source_module": "feishu_message_router",
+  "failure_type": "ingress_router_failure",
+  "failure_stage": "ingress",
+  "detected_at": "2026-03-17T18:00:00+08:00",
+  "recovery_action": "manual_required",
+  "recovery_status": "pending",
+  "operator": "system",
+  "audit_trace": {
+    "exception_type": "ValueError",
+    "exception_message": "invalid payload json",
+    "stack_hint": "ValueError: invalid payload json"
+  }
+}

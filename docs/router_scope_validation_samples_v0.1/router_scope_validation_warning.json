@@ -1,0 +1,21 @@
+﻿{
+  "route_type": "action",
+  "result_status": "success",
+  "scope_validation": {
+    "mode": "strict",
+    "is_valid": false,
+    "errors": [
+      "policy_scope format is invalid.",
+      "alias_scope format is invalid."
+    ],
+    "warnings": [],
+    "degraded_fields": [],
+    "normalized_scope": {
+      "workspace_id": "ws_alpha",
+      "project_id": "pj_market",
+      "policy_scope": "bad_scope",
+      "alias_scope": "bad_scope"
+    },
+    "action": "blocked"
+  }
+}

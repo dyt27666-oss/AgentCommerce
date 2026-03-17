@@ -1,0 +1,32 @@
+﻿{
+  "artifact_type": "governance_metrics_snapshot",
+  "schema_version": "governance.metrics.v0.2",
+  "generated_at": "2026-03-18T01:21:00+08:00",
+  "source_mode": "incremental",
+  "metrics": {
+    "runtime_failure": {
+      "total": 2,
+      "by_failure_type": {"unknown_runtime_failure": 2},
+      "by_failure_stage": {"runtime_unknown": 2}
+    },
+    "runtime_recovery_attempt": {"total": 1, "success": 0, "failed_retryable": 0, "failed_terminal": 0, "ignored": 1, "manual_required": 0},
+    "runtime_reconcile": {"no_action_needed": 0, "reconciled": 0, "partially_reconciled": 1, "manual_required": 0},
+    "runtime_event_log_degradation": {"queued": 1, "replayed": 0, "replay_failed": 0, "abandoned": 0},
+    "recovery_quality": {
+      "recovery_rate": 0.0,
+      "manual_intervention_rate": 0.0,
+      "abandonment_rate": 0.0,
+      "replay_success_rate": 0.0,
+      "denominator_rules": {}
+    }
+  },
+  "by_scope": {
+    "workspace:unknown|project:unknown|owner:unknown": {
+      "runtime_failure": {"total": 2},
+      "runtime_recovery_attempt": {"total": 1, "success": 0, "failed_retryable": 0, "failed_terminal": 0, "ignored": 1, "manual_required": 0},
+      "runtime_reconcile": {"no_action_needed": 0, "reconciled": 0, "partially_reconciled": 1, "manual_required": 0},
+      "runtime_event_log_degradation": {"queued": 1, "replayed": 0, "replay_failed": 0, "abandoned": 0}
+    }
+  },
+  "notes": ["scope metadata missing; grouped into unknown bucket"]
+}

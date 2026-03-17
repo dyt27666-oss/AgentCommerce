@@ -1,0 +1,23 @@
+﻿{
+  "schema_version": "policy.publish.v0.1",
+  "artifact_type": "policy_publish_result",
+  "publish_id": "pub-sample-002",
+  "requested_by": "owner_001",
+  "approver": "owner_001",
+  "target_scope": {
+    "scope_type": "workspace",
+    "scope_id": "ws_alpha"
+  },
+  "change_set": {
+    "active_alias_version_to": "owner.intent.alias.v0.2",
+    "active_alias_version_from": null
+  },
+  "from_status": "proposed",
+  "status": "rejected",
+  "transition_errors": [],
+  "timestamp": "2026-03-16T21:06:00+08:00",
+  "before": {},
+  "after": {},
+  "apply_error": "",
+  "changed_config_path": ""
+}

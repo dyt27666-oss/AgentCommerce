@@ -1,0 +1,29 @@
+﻿{
+  "schema_version": "policy.publish.v0.1",
+  "artifact_type": "policy_publish_request",
+  "publish_id": "pub-sample-001",
+  "requested_by": "owner_001",
+  "target_scope": {
+    "scope_type": "owner",
+    "scope_id": "owner_001"
+  },
+  "change_set": {
+    "active_alias_version_to": "owner.intent.alias.v0.2",
+    "active_alias_version_from": null
+  },
+  "status": "proposed",
+  "reason": "升级 owner 词典",
+  "approver": null,
+  "created_at": "2026-03-16T21:00:00+08:00",
+  "updated_at": "2026-03-16T21:00:00+08:00",
+  "review_notes": [],
+  "history": [
+    {
+      "from": null,
+      "to": "proposed",
+      "by": "owner_001",
+      "at": "2026-03-16T21:00:00+08:00"
+    }
+  ],
+  "impact_estimate": {}
+}

@@ -1,0 +1,23 @@
+﻿{
+  "artifact_type": "runtime_event_log_degradation",
+  "schema_version": "runtime.degradation.v0.1",
+  "degradation_id": "degrade-44444444444444444444444444444444",
+  "related_failure_id": "fail-ddd",
+  "related_request_id": null,
+  "publish_id": null,
+  "source_module": "runtime_unknown",
+  "original_event_type": "unknown_event",
+  "detected_at": "2026-03-18T00:13:00+08:00",
+  "degradation_reason": "ingest_unknown_failure",
+  "queue_status": "abandoned",
+  "replay_status": "abandoned",
+  "operator": "system",
+  "audit_trace": {
+    "ingest_result": {
+      "ingest_status": "invalid"
+    },
+    "failed_event_id": null,
+    "exception": "max replay attempts exceeded",
+    "warning": null
+  }
+}

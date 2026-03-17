@@ -1,0 +1,361 @@
+{
+  "phase": "6.1",
+  "chain": [
+    "planner",
+    "researcher",
+    "critic",
+    "strategist",
+    "reviewer",
+    "reporter"
+  ],
+  "role_artifacts": [
+    {
+      "artifact_type": "plan",
+      "schema_version": "council.artifact.v0.1",
+      "artifact_id": "planner-artifact-r1-01",
+      "request_id": "req-role-collab-001",
+      "brief_id": "brief-role-collab-001",
+      "handoff_id": null,
+      "council_round": 1,
+      "parent_artifact_id": null,
+      "derived_from_artifact_ids": [],
+      "owner_id": "owner_001",
+      "chat_id": "chat_role_collab",
+      "created_at": "2026-03-16T20:00:00+08:00",
+      "updated_at": "2026-03-16T20:00:00+08:00",
+      "produced_by_lane": "council",
+      "produced_by_role": "planner",
+      "produced_by_roles": [
+        "planner"
+      ],
+      "status": "under_review",
+      "summary": "planner output",
+      "constraints": [
+        "HITL required"
+      ],
+      "assumptions": [],
+      "open_questions": [],
+      "next_action": "owner review",
+      "owner_feedback": [],
+      "audit_trace": [],
+      "lineage": {
+        "phase": "6.1"
+      },
+      "role_metadata": {
+        "role": "planner",
+        "role_round": 1,
+        "role_run_id": "planner-r1",
+        "depends_on_roles": [],
+        "upstream_artifact_ids": [],
+        "owner_feedback_ids": [],
+        "rerun_of_role_run_id": null,
+        "execution_authority": false,
+        "generated_at": "2026-03-16T17:12:39+08:00"
+      }
+    },
+    {
+      "artifact_type": "risk",
+      "schema_version": "council.artifact.v0.1",
+      "artifact_id": "researcher-artifact-r1-02",
+      "request_id": "req-role-collab-001",
+      "brief_id": "brief-role-collab-001",
+      "handoff_id": null,
+      "council_round": 1,
+      "parent_artifact_id": "planner-artifact-r1-01",
+      "derived_from_artifact_ids": [
+        "planner-artifact-r1-01"
+      ],
+      "owner_id": "owner_001",
+      "chat_id": "chat_role_collab",
+      "created_at": "2026-03-16T20:00:00+08:00",
+      "updated_at": "2026-03-16T20:00:00+08:00",
+      "produced_by_lane": "council",
+      "produced_by_role": "researcher",
+      "produced_by_roles": [
+        "researcher"
+      ],
+      "status": "under_review",
+      "summary": "researcher output",
+      "constraints": [
+        "HITL required"
+      ],
+      "assumptions": [],
+      "open_questions": [],
+      "next_action": "owner review",
+      "owner_feedback": [],
+      "audit_trace": [],
+      "lineage": {
+        "phase": "6.1"
+      },
+      "role_metadata": {
+        "role": "researcher",
+        "role_round": 1,
+        "role_run_id": "researcher-r1",
+        "depends_on_roles": [
+          "planner"
+        ],
+        "upstream_artifact_ids": [
+          "planner-artifact-r1-01"
+        ],
+        "owner_feedback_ids": [],
+        "rerun_of_role_run_id": null,
+        "execution_authority": false,
+        "generated_at": "2026-03-16T17:12:39+08:00"
+      }
+    },
+    {
+      "artifact_type": "review",
+      "schema_version": "council.artifact.v0.1",
+      "artifact_id": "critic-artifact-r1-03",
+      "request_id": "req-role-collab-001",
+      "brief_id": "brief-role-collab-001",
+      "handoff_id": null,
+      "council_round": 1,
+      "parent_artifact_id": "researcher-artifact-r1-02",
+      "derived_from_artifact_ids": [
+        "planner-artifact-r1-01",
+        "researcher-artifact-r1-02"
+      ],
+      "owner_id": "owner_001",
+      "chat_id": "chat_role_collab",
+      "created_at": "2026-03-16T20:00:00+08:00",
+      "updated_at": "2026-03-16T20:00:00+08:00",
+      "produced_by_lane": "council",
+      "produced_by_role": "critic",
+      "produced_by_roles": [
+        "critic"
+      ],
+      "status": "under_review",
+      "summary": "critic output",
+      "constraints": [
+        "HITL required"
+      ],
+      "assumptions": [],
+      "open_questions": [],
+      "next_action": "owner review",
+      "owner_feedback": [],
+      "audit_trace": [],
+      "lineage": {
+        "phase": "6.1"
+      },
+      "role_metadata": {
+        "role": "critic",
+        "role_round": 1,
+        "role_run_id": "critic-r1",
+        "depends_on_roles": [
+          "planner",
+          "researcher"
+        ],
+        "upstream_artifact_ids": [
+          "planner-artifact-r1-01",
+          "researcher-artifact-r1-02"
+        ],
+        "owner_feedback_ids": [],
+        "rerun_of_role_run_id": null,
+        "execution_authority": false,
+        "generated_at": "2026-03-16T17:12:39+08:00"
+      }
+    },
+    {
+      "artifact_type": "decision",
+      "schema_version": "council.artifact.v0.1",
+      "artifact_id": "strategist-artifact-r1-04",
+      "request_id": "req-role-collab-001",
+      "brief_id": "brief-role-collab-001",
+      "handoff_id": null,
+      "council_round": 1,
+      "parent_artifact_id": "critic-artifact-r1-03",
+      "derived_from_artifact_ids": [
+        "researcher-artifact-r1-02",
+        "critic-artifact-r1-03"
+      ],
+      "owner_id": "owner_001",
+      "chat_id": "chat_role_collab",
+      "created_at": "2026-03-16T20:00:00+08:00",
+      "updated_at": "2026-03-16T20:00:00+08:00",
+      "produced_by_lane": "council",
+      "produced_by_role": "strategist",
+      "produced_by_roles": [
+        "strategist"
+      ],
+      "status": "under_review",
+      "summary": "strategist output",
+      "constraints": [
+        "HITL required"
+      ],
+      "assumptions": [],
+      "open_questions": [],
+      "next_action": "owner review",
+      "owner_feedback": [],
+      "audit_trace": [],
+      "lineage": {
+        "phase": "6.1"
+      },
+      "role_metadata": {
+        "role": "strategist",
+        "role_round": 1,
+        "role_run_id": "strategist-r1",
+        "depends_on_roles": [
+          "critic"
+        ],
+        "upstream_artifact_ids": [
+          "planner-artifact-r1-01",
+          "researcher-artifact-r1-02",
+          "critic-artifact-r1-03"
+        ],
+        "owner_feedback_ids": [],
+        "rerun_of_role_run_id": null,
+        "execution_authority": false,
+        "generated_at": "2026-03-16T17:12:39+08:00"
+      }
+    },
+    {
+      "artifact_type": "review",
+      "schema_version": "council.artifact.v0.1",
+      "artifact_id": "reviewer-artifact-r1-05",
+      "request_id": "req-role-collab-001",
+      "brief_id": "brief-role-collab-001",
+      "handoff_id": null,
+      "council_round": 1,
+      "parent_artifact_id": "strategist-artifact-r1-04",
+      "derived_from_artifact_ids": [
+        "critic-artifact-r1-03",
+        "strategist-artifact-r1-04"
+      ],
+      "owner_id": "owner_001",
+      "chat_id": "chat_role_collab",
+      "created_at": "2026-03-16T20:00:00+08:00",
+      "updated_at": "2026-03-16T20:00:00+08:00",
+      "produced_by_lane": "council",
+      "produced_by_role": "reviewer",
+      "produced_by_roles": [
+        "reviewer"
+      ],
+      "status": "under_review",
+      "summary": "reviewer output",
+      "constraints": [
+        "HITL required"
+      ],
+      "assumptions": [],
+      "open_questions": [],
+      "next_action": "owner review",
+      "owner_feedback": [],
+      "audit_trace": [],
+      "lineage": {
+        "phase": "6.1"
+      },
+      "role_metadata": {
+        "role": "reviewer",
+        "role_round": 1,
+        "role_run_id": "reviewer-r1",
+        "depends_on_roles": [
+          "strategist"
+        ],
+        "upstream_artifact_ids": [
+          "planner-artifact-r1-01",
+          "researcher-artifact-r1-02",
+          "critic-artifact-r1-03",
+          "strategist-artifact-r1-04"
+        ],
+        "owner_feedback_ids": [],
+        "rerun_of_role_run_id": null,
+        "execution_authority": false,
+        "generated_at": "2026-03-16T17:12:39+08:00"
+      }
+    },
+    {
+      "artifact_type": "decision",
+      "schema_version": "council.artifact.v0.1",
+      "artifact_id": "reporter-artifact-r1-06",
+      "request_id": "req-role-collab-001",
+      "brief_id": "brief-role-collab-001",
+      "handoff_id": null,
+      "council_round": 1,
+      "parent_artifact_id": "reviewer-artifact-r1-05",
+      "derived_from_artifact_ids": [
+        "strategist-artifact-r1-04",
+        "reviewer-artifact-r1-05"
+      ],
+      "owner_id": "owner_001",
+      "chat_id": "chat_role_collab",
+      "created_at": "2026-03-16T20:00:00+08:00",
+      "updated_at": "2026-03-16T20:00:00+08:00",
+      "produced_by_lane": "council",
+      "produced_by_role": "reporter",
+      "produced_by_roles": [
+        "reporter"
+      ],
+      "status": "under_review",
+      "summary": "reporter output",
+      "constraints": [
+        "HITL required"
+      ],
+      "assumptions": [],
+      "open_questions": [],
+      "next_action": "owner review",
+      "owner_feedback": [],
+      "audit_trace": [],
+      "lineage": {
+        "phase": "6.1"
+      },
+      "role_metadata": {
+        "role": "reporter",
+        "role_round": 1,
+        "role_run_id": "reporter-r1",
+        "depends_on_roles": [
+          "reviewer"
+        ],
+        "upstream_artifact_ids": [
+          "planner-artifact-r1-01",
+          "researcher-artifact-r1-02",
+          "critic-artifact-r1-03",
+          "strategist-artifact-r1-04",
+          "reviewer-artifact-r1-05"
+        ],
+        "owner_feedback_ids": [],
+        "rerun_of_role_run_id": null,
+        "execution_authority": false,
+        "generated_at": "2026-03-16T17:12:39+08:00"
+      }
+    }
+  ],
+  "owner_reroute_hint": {
+    "target_role": "strategist",
+    "reason": "owner requested rerun for strategist",
+    "source": "owner_feedback_text"
+  },
+  "council_packet": {
+    "packet_type": "council_role_packet.v0.1",
+    "generated_at": "2026-03-16T17:12:39+08:00",
+    "roles_present": [
+      "critic",
+      "planner",
+      "reporter",
+      "researcher",
+      "reviewer",
+      "strategist"
+    ],
+    "artifacts_by_role": {
+      "planner": [
+        "planner-artifact-r1-01"
+      ],
+      "researcher": [
+        "researcher-artifact-r1-02"
+      ],
+      "critic": [
+        "critic-artifact-r1-03"
+      ],
+      "strategist": [
+        "strategist-artifact-r1-04"
+      ],
+      "reviewer": [
+        "reviewer-artifact-r1-05"
+      ],
+      "reporter": [
+        "reporter-artifact-r1-06"
+      ]
+    },
+    "can_enter_execution": false,
+    "requires_owner_review": true
+  }
+}

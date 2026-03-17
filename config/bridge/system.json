@@ -1,0 +1,13 @@
+{
+  "chat_lane_enabled": true,
+  "chat_lane_require_mention": false,
+  "chat_lane_only_groups": [],
+  "chat_lane_blocked_groups": [],
+  "chat_lane_mention_tokens": [
+    "@bot",
+    "@机器人",
+    "@AgentCommerce",
+    "@bridge"
+  ]
+}
+

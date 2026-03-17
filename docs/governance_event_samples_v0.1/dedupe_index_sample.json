@@ -1,0 +1,10 @@
+﻿{
+  "event_ids": {
+    "scope:m-1001:pass": "2026-03-17T10:00:00+08:00",
+    "policy_publish:pub-001:applied:2026-03-17T10:10:00+08:00": "2026-03-17T10:10:00+08:00"
+  },
+  "fallback_keys": {
+    "scope_validation_result|artifacts/council_feishu_message_route_result.json|pass|2026-03-17T10:00": "2026-03-17T10:00:00+08:00",
+    "policy_publish_result|artifacts/policy_publish_result.json|applied|2026-03-17T10:10": "2026-03-17T10:10:00+08:00"
+  }
+}

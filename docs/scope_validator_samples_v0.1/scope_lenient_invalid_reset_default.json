@@ -1,0 +1,20 @@
+﻿{
+  "mode": "lenient",
+  "is_valid": true,
+  "errors": [],
+  "warnings": [
+    "policy_scope format is invalid.",
+    "alias_scope format is invalid."
+  ],
+  "degraded_fields": [
+    "alias_scope",
+    "policy_scope"
+  ],
+  "normalized_scope": {
+    "workspace_id": "ws_alpha",
+    "project_id": "pj_market",
+    "policy_scope": "default",
+    "alias_scope": "default"
+  },
+  "action": "degraded_continue"
+}

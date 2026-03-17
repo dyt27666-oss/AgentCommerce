@@ -1,0 +1,26 @@
+{
+  "handoff_id": "handoff-YYYYMMDD-001",
+  "request_id": "exec-req-001",
+  "brief_id": "council-poc-brief-001",
+  "approval_status": "approved",
+  "approved_by": "owner_manual",
+  "approved_at": "2026-03-15T14:30:00+08:00",
+  "codex_ready_payload": {
+    "goal": "",
+    "scope": [],
+    "non_goals": [],
+    "allowed_files": [],
+    "constraints": [],
+    "validation_steps": [],
+    "delivery_format": [],
+    "repo_context": {
+      "repo": "AgentCommerce",
+      "branch": "main"
+    }
+  },
+  "validation_snapshot": {
+    "dry_run_status": "valid",
+    "dry_run_errors": []
+  },
+  "notes": ""
+}

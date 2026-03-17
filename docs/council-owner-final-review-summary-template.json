@@ -1,0 +1,15 @@
+{
+  "request_id": "exec-req-001",
+  "brief_id": "council-poc-brief-001",
+  "handoff_id": "handoff-20260315-004",
+  "final_owner_decision": "approved",
+  "execution_status": "completed",
+  "scope_compliance_check": {
+    "in_allowed_scope": true,
+    "constraints_compliant": true,
+    "note": "All changed files are within allowed_files and constraints."
+  },
+  "key_reason": "Work output matches approved scope and constraints.",
+  "next_action": "Close this round and proceed with merge/release decision.",
+  "notes": ""
+}

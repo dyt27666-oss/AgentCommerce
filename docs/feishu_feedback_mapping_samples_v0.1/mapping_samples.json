@@ -1,0 +1,202 @@
+﻿{
+  "cases": [
+    {
+      "case_id": "action-needs_fix",
+      "payload": {
+        "source": "feishu_action_protocol",
+        "message_id": "m-001",
+        "chat_id": "oc-001",
+        "sender_id": "owner_001",
+        "sender_name": "Owner",
+        "text": "needs_fix",
+        "current_stage": "council_review",
+        "current_artifact_id": "plan-001",
+        "current_artifact_type": "plan",
+        "current_artifact_status": "under_review",
+        "current_request_id": "req-001",
+        "current_brief_id": "brief-001",
+        "current_handoff_id": ""
+      }
+    },
+    {
+      "case_id": "action-approved",
+      "payload": {
+        "source": "feishu_action_protocol",
+        "message_id": "m-002",
+        "chat_id": "oc-001",
+        "sender_id": "owner_001",
+        "sender_name": "Owner",
+        "text": "approved",
+        "current_stage": "owner_review",
+        "current_artifact_id": "decision-001",
+        "current_artifact_type": "decision",
+        "current_artifact_status": "ready_for_owner_review",
+        "current_request_id": "req-001",
+        "current_brief_id": "brief-001",
+        "current_handoff_id": ""
+      }
+    },
+    {
+      "case_id": "action-rejected",
+      "payload": {
+        "source": "feishu_action_protocol",
+        "message_id": "m-003",
+        "chat_id": "oc-001",
+        "sender_id": "owner_001",
+        "sender_name": "Owner",
+        "text": "rejected",
+        "current_stage": "owner_review",
+        "current_artifact_id": "decision-001",
+        "current_artifact_type": "decision",
+        "current_artifact_status": "ready_for_owner_review",
+        "current_request_id": "req-001",
+        "current_brief_id": "brief-001",
+        "current_handoff_id": ""
+      }
+    },
+    {
+      "case_id": "nl-risk-not-enough",
+      "payload": {
+        "source": "feishu_chat",
+        "message_id": "m-004",
+        "chat_id": "oc-001",
+        "sender_id": "owner_001",
+        "sender_name": "Owner",
+        "text": "这个方案不行，风险分析不够",
+        "current_stage": "council_review",
+        "current_artifact_id": "risk-001",
+        "current_artifact_type": "risk",
+        "current_artifact_status": "under_review",
+        "current_request_id": "req-001",
+        "current_brief_id": "brief-001",
+        "current_handoff_id": ""
+      }
+    },
+    {
+      "case_id": "nl-scope-too-wide",
+      "payload": {
+        "source": "feishu_chat",
+        "message_id": "m-005",
+        "chat_id": "oc-001",
+        "sender_id": "owner_001",
+        "sender_name": "Owner",
+        "text": "scope 这里还是太宽了",
+        "current_stage": "council_review",
+        "current_artifact_id": "plan-001",
+        "current_artifact_type": "plan",
+        "current_artifact_status": "under_review",
+        "current_request_id": "req-001",
+        "current_brief_id": "brief-001",
+        "current_handoff_id": ""
+      }
+    },
+    {
+      "case_id": "nl-receipt-not-clear",
+      "payload": {
+        "source": "feishu_chat",
+        "message_id": "m-006",
+        "chat_id": "oc-001",
+        "sender_id": "owner_001",
+        "sender_name": "Owner",
+        "text": "handoff 还不能执行，receipt 要求没写清楚",
+        "current_stage": "council_review",
+        "current_artifact_id": "handoff-001",
+        "current_artifact_type": "handoff",
+        "current_artifact_status": "owner_approved",
+        "current_request_id": "req-001",
+        "current_brief_id": "brief-001",
+        "current_handoff_id": "handoff-001"
+      }
+    },
+    {
+      "case_id": "nl-resubmit",
+      "payload": {
+        "source": "feishu_chat",
+        "message_id": "m-007",
+        "chat_id": "oc-001",
+        "sender_id": "owner_001",
+        "sender_name": "Owner",
+        "text": "这个可以，重新提交给我审核",
+        "current_stage": "council_review",
+        "current_artifact_id": "plan-002",
+        "current_artifact_type": "plan",
+        "current_artifact_status": "revised",
+        "current_request_id": "req-001",
+        "current_brief_id": "brief-001",
+        "current_handoff_id": ""
+      }
+    },
+    {
+      "case_id": "nl-comment-not-approval",
+      "payload": {
+        "source": "feishu_chat",
+        "message_id": "m-008",
+        "chat_id": "oc-001",
+        "sender_id": "owner_001",
+        "sender_name": "Owner",
+        "text": "这个只是注释，不代表批准",
+        "current_stage": "council_review",
+        "current_artifact_id": "decision-001",
+        "current_artifact_type": "decision",
+        "current_artifact_status": "ready_for_owner_review",
+        "current_request_id": "req-001",
+        "current_brief_id": "brief-001",
+        "current_handoff_id": ""
+      }
+    },
+    {
+      "case_id": "ambiguous-zaigaigai",
+      "payload": {
+        "source": "feishu_chat",
+        "message_id": "m-009",
+        "chat_id": "oc-001",
+        "sender_id": "owner_001",
+        "sender_name": "Owner",
+        "text": "再改改",
+        "current_stage": "council_review",
+        "current_artifact_id": "plan-001",
+        "current_artifact_type": "plan",
+        "current_artifact_status": "under_review",
+        "current_request_id": "req-001",
+        "current_brief_id": "brief-001",
+        "current_handoff_id": ""
+      }
+    },
+    {
+      "case_id": "ambiguous-butaixing",
+      "payload": {
+        "source": "feishu_chat",
+        "message_id": "m-010",
+        "chat_id": "oc-001",
+        "sender_id": "owner_001",
+        "sender_name": "Owner",
+        "text": "这个不太行",
+        "current_stage": "council_review",
+        "current_artifact_id": "plan-001",
+        "current_artifact_type": "plan",
+        "current_artifact_status": "under_review",
+        "current_request_id": "req-001",
+        "current_brief_id": "brief-001",
+        "current_handoff_id": ""
+      }
+    },
+    {
+      "case_id": "ambiguous-xingba",
+      "payload": {
+        "source": "feishu_chat",
+        "message_id": "m-011",
+        "chat_id": "oc-001",
+        "sender_id": "owner_001",
+        "sender_name": "Owner",
+        "text": "行吧",
+        "current_stage": "council_review",
+        "current_artifact_id": "plan-001",
+        "current_artifact_type": "plan",
+        "current_artifact_status": "under_review",
+        "current_request_id": "req-001",
+        "current_brief_id": "brief-001",
+        "current_handoff_id": ""
+      }
+    }
+  ]
+}

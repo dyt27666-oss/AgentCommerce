@@ -1,0 +1,52 @@
+﻿{
+  "artifact_type": "handoff",
+  "schema_version": "council.artifact.v0.1",
+  "artifact_id": "handoff-req-20260316-r1",
+  "request_id": "req-20260316-001",
+  "brief_id": "brief-20260316-001",
+  "handoff_id": "handoff-20260316-001",
+  "council_round": 1,
+  "parent_artifact_id": "decision-req-20260316-r1",
+  "derived_from_artifact_ids": ["decision-req-20260316-r1"],
+  "owner_id": "owner_001",
+  "chat_id": "feishu-chat-001",
+  "created_at": "2026-03-16T10:30:00+08:00",
+  "updated_at": "2026-03-16T10:30:00+08:00",
+  "produced_by_lane": "council",
+  "produced_by_role": "strategist",
+  "produced_by_roles": ["strategist", "planner", "reviewer"],
+  "status": "handoff_ready",
+  "summary": "Council -> Execution 交接对象（待 owner 批准执行）。",
+  "constraints": ["execution 仅可在 owner_approval_status=approved 时进行"],
+  "assumptions": ["bridge 会做 stage/policy gate"],
+  "open_questions": [],
+  "next_action": "owner 在飞书进行最终批准。",
+  "owner_feedback": [],
+  "audit_trace": [
+    {
+      "event": "handoff_prepared",
+      "actor": "council/strategist",
+      "at": "2026-03-16T10:30:00+08:00"
+    }
+  ],
+  "lineage": {
+    "root_request_id": "req-20260316-001"
+  },
+  "approved_execution_brief": {
+    "goal": "落地 Council artifact schema v0.1",
+    "allowed_paths": [
+      "docs/council-artifact-schema-v0.1.md",
+      "tools/council_bridge/council_artifact_schema.py",
+      "docs/council_artifact_samples_v0.1"
+    ]
+  },
+  "execution_scope": ["新增 schema 模型", "新增文档与样例", "新增解析测试"],
+  "execution_constraints": ["不得修改主 workflow 结构", "不得绕过 owner 审批门禁"],
+  "no_go_zones": ["自动执行未批准任务", "把 chat 输入视为执行授权"],
+  "required_receipts": [
+    "artifacts/council_codex_dispatch_receipt.json",
+    "artifacts/council_codex_execution_receipt.json"
+  ],
+  "owner_approval_status": "pending",
+  "execution_readiness_status": "not_ready"
+}

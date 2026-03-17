@@ -1,0 +1,43 @@
+﻿{
+  "metrics_version": "governance.metrics.v0.1",
+  "normalization": {
+    "hit": 12,
+    "ambiguity": 4,
+    "ignored": 3,
+    "total": 15
+  },
+  "feedback_mapping": {
+    "hit": 8,
+    "miss": 2,
+    "total": 10
+  },
+  "role_rework": {
+    "detected": 3,
+    "total": 5,
+    "detect_rate": 0.6
+  },
+  "state_validation": {
+    "pass": 9,
+    "block": 3,
+    "total": 12
+  },
+  "apply": {
+    "success": 5,
+    "blocked": 2,
+    "total": 7
+  },
+  "execution_dispatch": {
+    "success": 2,
+    "blocked": 1,
+    "total": 3
+  },
+  "by_scope": {
+    "workspace:ws_alpha|project:pj_market|owner:owner_001": {
+      "normalization_events": 9,
+      "mapping_events": 8,
+      "validation_events": 6,
+      "apply_events": 4,
+      "dispatch_events": 2
+    }
+  }
+}

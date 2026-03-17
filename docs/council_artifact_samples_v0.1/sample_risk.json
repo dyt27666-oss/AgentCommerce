@@ -1,0 +1,49 @@
+﻿{
+  "artifact_type": "risk",
+  "schema_version": "council.artifact.v0.1",
+  "artifact_id": "risk-req-20260316-r1",
+  "request_id": "req-20260316-001",
+  "brief_id": "brief-20260316-001",
+  "handoff_id": null,
+  "council_round": 1,
+  "parent_artifact_id": "plan-req-20260316-r1",
+  "derived_from_artifact_ids": ["plan-req-20260316-r1"],
+  "owner_id": "owner_001",
+  "chat_id": "feishu-chat-001",
+  "created_at": "2026-03-16T10:05:00+08:00",
+  "updated_at": "2026-03-16T10:05:00+08:00",
+  "produced_by_lane": "council",
+  "produced_by_role": "critic",
+  "produced_by_roles": ["critic", "reviewer"],
+  "status": "under_review",
+  "summary": "风险基线与越界动作清单。",
+  "constraints": ["禁止直接触发 execution lane"],
+  "assumptions": ["飞书动作词会被 bridge 结构化"],
+  "open_questions": ["是否允许 owner comment 直接改变优先级"],
+  "next_action": "补齐高风险项的缓解措施细节。",
+  "owner_feedback": [],
+  "audit_trace": [
+    {
+      "event": "risk_analyzed",
+      "actor": "council/critic",
+      "at": "2026-03-16T10:05:00+08:00"
+    }
+  ],
+  "lineage": {
+    "root_request_id": "req-20260316-001"
+  },
+  "risk_items": [
+    {
+      "risk_id": "R1",
+      "description": "owner 反馈无法定位到具体 section",
+      "severity": "high",
+      "likelihood": "medium",
+      "mitigation": "强制 target_section 为非空并规范命名"
+    }
+  ],
+  "severity": "high",
+  "likelihood": "medium",
+  "mitigation": ["引入统一字段校验", "在审计层记录 unresolved feedback"],
+  "blocked_actions": ["无 owner 批准直接执行"],
+  "escalation_conditions": ["出现 owner_rejected 且同类问题重复 >=2 轮"]
+}

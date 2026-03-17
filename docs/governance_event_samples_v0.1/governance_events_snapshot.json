@@ -1,0 +1,30 @@
+﻿{
+  "snapshot_version": "governance.snapshot.v0.1",
+  "source": "event_log",
+  "event_log_path": "artifacts/governance_events.log",
+  "warnings": [],
+  "scope_validation": {
+    "total": 4,
+    "pass": 2,
+    "degraded": 2,
+    "blocked": 0
+  },
+  "router_scope_observe": {
+    "total": 4,
+    "warning": 2,
+    "pass": 2
+  },
+  "policy_publish": {
+    "total": 3,
+    "applied": 1,
+    "rejected": 1,
+    "rolled_back": 1
+  },
+  "by_scope": {
+    "workspace:ws_alpha|project:pj_market|owner:owner_001": {
+      "scope_validation_events": 4,
+      "router_scope_observe_events": 4,
+      "policy_publish_events": 2
+    }
+  }
+}

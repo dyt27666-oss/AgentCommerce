@@ -1,176 +1,130 @@
-# EcomScout-AI
+﻿# AgentCommerce v1
 
-EcomScout-AI is a LangGraph-based multi-agent market intelligence workflow for e-commerce research.
+AgentCommerce 是一个以飞书为控制台、以 Council 为策略层、以 Codex/CLI 为执行层、以 Artifact 为治理核心的人类在环（HITL）AI 协作操作系统。
 
-The current system turns:
+## 项目简介
 
-`user_query -> planner -> research -> crawler -> data_processing -> analysis -> strategy -> report`
+本项目当前聚焦“治理型协作”而不是“通用聊天助手”：
 
-into a Markdown market analysis report.
+- 把任务拆分为 `Chat / Council / Execution` 三条 lane。
+- 用统一 artifact 作为状态、审批、执行和复盘的唯一可信载体。
+- 在 owner 明确确认下推进状态迁移和执行触发。
+- 通过 event log + snapshot 指标实现可观测、可审计、可恢复。
 
-## Current Scope / Development Principles
+## 为什么不是普通 Agent Demo
 
-The project follows a phased development model.
+普通 demo 往往只有“输入 -> 大模型 -> 输出”。AgentCommerce 的核心差异是：
 
-Current in-scope work is limited to:
+1. `HITL`：关键动作必须 owner 明确确认。
+2. `Artifact-first`：关键行为都落地结构化产物，而非只看 stdout。
+3. `Governance over automation`：优先可监督、可追踪、可回放。
+4. `Gate-based execution`：批准不等于执行，执行必须经过独立 gate。
 
-- workflow stability
-- crawler robustness
-- analytics enhancement
-- report quality
-- documentation clarity
-
-Current out-of-scope work is explicitly deferred:
-
-- LLM integration
-- multi-LLM debate
-- Feishu approval
-- API orchestration
-- task orchestration
-- checkpoint resume
-
-The core workflow graph is treated as stable and should not be changed casually.
-
-## Current Workflow
+## 系统架构总览
 
 ```text
-planner
--> research
--> crawler
--> data_processing
--> analysis
--> strategy
--> report
+Human Owner (Feishu)
+  -> Feishu Control Layer
+  -> Bridge Governance Layer
+      -> Chat Lane
+      -> Council Lane
+      -> Execution Lane
+  -> Artifact & Audit Layer
+  -> Governance Event Log & Snapshot Metrics
+  -> Runtime Failure Recovery Layer
 ```
 
-## Agent Roles
+关键实现目录：
 
-- `planner`: keeps the workflow entry stable
-- `research`: converts the query into deterministic crawl parameters
-- `crawler`: fetches data from providers and handles fallback behavior
-- `data_processing`: normalizes and cleans product records
-- `analysis`: orchestrates modular market analytics
-- `strategy`: derives practical market-entry guidance
-- `report`: renders the final Markdown report
+- `tools/council_bridge/feishu_message_router.py`
+- `tools/council_bridge/council_artifact_schema.py`
+- `tools/council_bridge/council_artifact_state_machine.py`
+- `tools/council_bridge/policy_publish_fsm.py`
+- `tools/council_bridge/governance_event_log.py`
+- `tools/council_bridge/governance_metrics_snapshot_job.py`
+- `tools/council_bridge/runtime_failure_event_normalizer.py`
+- `tools/council_bridge/runtime_recovery_attempt_runner.py`
+- `tools/council_bridge/runtime_publish_reconcile_hook.py`
+- `tools/council_bridge/runtime_event_log_degradation_recovery.py`
 
-## Current Architecture Shape
-
-The current implementation is a deterministic workflow with modular analytics.
-
-Key structure:
+## 核心流程（Feishu -> Council -> Owner -> Execution/Audit）
 
 ```text
-ecomscout_ai/
-├── analysis/
-├── agents/
-├── crawlers/
-├── graph/
-└── state/
+Owner 在 Feishu 发起任务
+  -> Router 进入 Council 路径（可 observe）
+  -> Council 生成/修订 artifact
+  -> Owner 反馈与确认（needs_fix/revise/approve）
+  -> 状态机校验 + owner-confirmed apply
+  -> handoff gate 校验
+  -> owner-confirmed execution dispatch
+  -> execution receipt + audit artifacts
+  -> event log + snapshot 指标
 ```
 
-- `agents/` contains workflow nodes
-- `crawlers/` contains provider-facing crawl logic
-- `analysis/` contains analytics modules
-- `graph/` contains LangGraph assembly
-- `state/` contains the shared workflow state
+## Governance 与 Runtime Recovery 能力
 
-## Shared State
+### 治理能力（已实现）
 
-The current workflow state is:
+- Council 统一 schema（plan/risk/review/decision/handoff）
+- 状态迁移校验器（最小合法迁移 + 上下文约束）
+- Feishu feedback mapping（保守映射）
+- owner-confirmed apply transition
+- execution handoff gate / dispatch protocol
+- policy publish FSM + alias version gate
 
-```python
-{
-    "user_query": str,
-    "crawl_keyword": str,
-    "crawl_fields": list,
-    "crawl_depth": int,
-    "crawl_limit": int,
-    "crawl_status": str,
-    "products": list,
-    "clean_data": list,
-    "analysis_result": dict,
-    "strategy": str,
-    "report": str,
-}
-```
+### 运行时恢复能力（已实现）
 
-## Current Analytics Modules
+- runtime failure 标准化
+- recovery attempt（有限 retry / ignore / manual_required）
+- publish failure reconcile hook（只读对账）
+- event log degradation queue + replay
+- recovery metrics extension（v0.2 snapshot）
 
-The analysis layer is modular and currently includes:
+## 核心原则
 
-- `price_analysis`
-- `review_analysis`
-- `brand_analysis`
-- `quality_metrics`
+- `Artifact-first`
+- `Human-in-the-loop`
+- `Lane boundary`（Chat 不等于审批，Council 不直接执行）
+- `Gate & policy enforcement`
+- `Auditability`
 
-`analysis_agent` orchestrates these modules and returns structured outputs instead of embedding all logic into a single function.
+## 当前完成状态
 
-## Running The Project
+### Phase 6.5（P1）
 
-Install dependencies:
+- T1 Scope Validator Core：完成
+- T2 Router Observe Integration：完成
+- T3 Policy Publish FSM：完成
+- T4 Alias Version Gate：完成
+- T5 Incremental Governance Event Log：完成
+- T6 Metrics Snapshot Job：完成
+
+### Phase 7.1
+
+- A Failure Event Normalizer：完成
+- B Recovery Attempt Runner：完成
+- C Publish Failure Reconcile Hook：完成
+- D Event Log Degradation Recovery：完成
+- E Recovery Metrics Extension：完成
+
+最新回归：`py -m pytest -q` 通过（331 tests）。
+
+## 文档入口
+
+- [文档导航](docs/index.md)
+- [Architecture v1](docs/architecture-v1.md)
+- [Final Delivery Report v1](docs/final-delivery-report-v1.md)
+
+## 后续 Roadmap（Phase 7+）
+
+1. Phase 7.2：运行时治理深化（恢复策略编排、证据链收敛、操作手册）。
+2. Phase 8：平台化增强（版本治理、跨项目策略包、可展示层与对外交付标准化）。
+
+## 快速开始
 
 ```powershell
 py -m pip install -r requirements.txt
-```
-
-Run the workflow:
-
-```powershell
-py main.py
-```
-
-### Optional Strategy LLM Configuration
-
-By default, the project runs in `rule_based` strategy mode and does not require any API key.
-
-Only when you explicitly enable `llm_assisted` strategy mode do you need to configure environment variables.
-
-## Strategy Modes
-
-The current `strategy_agent` supports:
-
-- `rule_based`
-- `llm_assisted`
-
-It also returns a structured `Decision Brief` and tracks the actual execution path through `strategy_execution_mode`:
-
-- `rule_based`
-- `llm_assisted`
-- `rule_based_fallback`
-
-Default behavior does not require any API key because the workflow starts in `rule_based` mode.
-
-If `llm_assisted` is enabled and the model output cannot be parsed or validated, the system automatically falls back to `rule_based_fallback`.
-
-The current minimum `.env` shape is:
-
-```env
-SILRA_API_KEY=
-SILRA_MODEL=glm-4.7
-```
-
-You can copy from `.env.example` when testing the LLM-assisted strategy path.
-
-For the smallest real validation path, see [docs/llm-assisted.md](docs/llm-assisted.md).
-
-Run tests:
-
-```powershell
 py -m pytest -q
 ```
 
-## Current Limitations
-
-- Amazon crawling is still best-effort rather than production-grade
-- fallback mode may use normalized mock data when live crawl is unavailable
-- no orchestration layer exists yet
-- no human approval loop exists yet
-- no LLM-driven reasoning exists yet
-
-## Project Governance
-
-The repository-level development rules are defined in:
-
-- `docs/development-charter.md`
-- `docs/architecture.md`
-- `docs/roadmap.md`
+如需查看治理/恢复样例，请参阅 `docs/*_samples_v0.1/` 与 recovery snapshot 样例。

@@ -1,0 +1,55 @@
+﻿{
+  "artifact_type": "governance_metrics_snapshot",
+  "schema_version": "governance.metrics.v0.1",
+  "generated_at": "2026-03-17T16:30:00+08:00",
+  "source_mode": "incremental",
+  "metrics": {
+    "scope_validation": {
+      "pass": 3,
+      "blocked": 1,
+      "degraded": 2
+    },
+    "router_scope_observe": {
+      "observed": 4,
+      "warnings": 2,
+      "invalid_scope": 1
+    },
+    "policy_publish": {
+      "applied": 2,
+      "rejected": 1,
+      "rolled_back": 1
+    }
+  },
+  "by_scope": {
+    "workspace:ws_alpha|project:pj_market|owner:owner_001": {
+      "scope_validation": {
+        "pass": 2,
+        "blocked": 0,
+        "degraded": 1
+      },
+      "router_scope_observe": {
+        "observed": 2,
+        "warnings": 1,
+        "invalid_scope": 0
+      },
+      "policy_publish": {
+        "applied": 1,
+        "rejected": 1,
+        "rolled_back": 0
+      }
+    }
+  },
+  "job_stats": {
+    "event_log_path": "artifacts/governance_events.log",
+    "input_events": 12,
+    "deduped_events": 10,
+    "dedupe": {
+      "input_total": 12,
+      "invalid_events": 1,
+      "duplicate_event_id": 1,
+      "duplicate_fallback_key": 0,
+      "kept_events": 10
+    },
+    "warnings": []
+  }
+}

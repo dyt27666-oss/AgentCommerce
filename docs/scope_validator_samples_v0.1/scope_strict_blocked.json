@@ -1,0 +1,18 @@
+﻿{
+  "mode": "strict",
+  "is_valid": false,
+  "errors": [
+    "workspace_id is missing/unknown.",
+    "project_id is missing/unknown.",
+    "policy_scope format is invalid."
+  ],
+  "warnings": [],
+  "degraded_fields": [],
+  "normalized_scope": {
+    "workspace_id": "unknown",
+    "project_id": "unknown",
+    "policy_scope": "workspace:ws_alpha",
+    "alias_scope": "workspace:ws_alpha"
+  },
+  "action": "blocked"
+}

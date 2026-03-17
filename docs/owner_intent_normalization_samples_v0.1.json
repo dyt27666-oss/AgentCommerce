@@ -1,0 +1,47 @@
+﻿{
+  "version": "owner.intent.samples.v0.1",
+  "cases": [
+    {
+      "case_id": "section-risk-tighten",
+      "text": "风险分析不够，请把 risk 收紧",
+      "expected": {
+        "intent_type": "section_feedback",
+        "target_section": "risk",
+        "requested_action": "tighten"
+      }
+    },
+    {
+      "case_id": "role-strategist-rewrite",
+      "text": "让 strategist 重写",
+      "expected": {
+        "intent_type": "role_rework",
+        "target_role": "strategist",
+        "requested_action": "rewrite"
+      }
+    },
+    {
+      "case_id": "role-critic-recheck",
+      "text": "请让批判角色重看",
+      "expected": {
+        "intent_type": "role_rework",
+        "target_role": "critic",
+        "requested_action": "recheck"
+      }
+    },
+    {
+      "case_id": "resubmit-transition-hint",
+      "text": "这个可以，重新提交给我审核",
+      "expected": {
+        "intent_type": "transition_hint",
+        "requested_action": "resubmit"
+      }
+    },
+    {
+      "case_id": "ambiguous",
+      "text": "再改改",
+      "expected": {
+        "intent_type": "unknown"
+      }
+    }
+  ]
+}

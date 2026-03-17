@@ -1,0 +1,30 @@
+﻿{
+  "artifact_type": "runtime_reconcile_report",
+  "schema_version": "runtime.reconcile.v0.1",
+  "failure_id": "fail-apply-partial-001",
+  "publish_id": "pub-001",
+  "source_module": "runtime_publish_reconcile_hook",
+  "reconcile_scope": "publish_failure",
+  "detected_at": "2026-03-17T22:00:00+08:00",
+  "reconcile_status": "partially_reconciled",
+  "before": {
+    "active_alias_version": "v1",
+    "publish_status": "blocked"
+  },
+  "after": {
+    "expected_active_alias_version": "v2",
+    "reported_after_active_alias_version": "v2"
+  },
+  "current_runtime_state": {
+    "active_alias_version": "v2",
+    "result_status": "blocked",
+    "config_snapshot_provided": true
+  },
+  "missing_artifacts": [],
+  "repaired_artifacts": [],
+  "residual_risk": [
+    "config appears changed to target version while publish is not finalized"
+  ],
+  "recommended_action": "manual_publish_review",
+  "audit_trace": {}
+}

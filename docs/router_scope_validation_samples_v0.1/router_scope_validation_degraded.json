@@ -1,0 +1,24 @@
+﻿{
+  "route_type": "council",
+  "result_status": "observed",
+  "scope_validation": {
+    "mode": "lenient",
+    "is_valid": true,
+    "errors": [],
+    "warnings": [
+      "workspace_id is missing/unknown.",
+      "project_id is missing/unknown."
+    ],
+    "degraded_fields": [
+      "project_id",
+      "workspace_id"
+    ],
+    "normalized_scope": {
+      "workspace_id": "unknown",
+      "project_id": "unknown",
+      "policy_scope": "default",
+      "alias_scope": "default"
+    },
+    "action": "degraded_continue"
+  }
+}

@@ -1,0 +1,20 @@
+﻿{
+  "mode": "lenient",
+  "is_valid": true,
+  "errors": [],
+  "warnings": [
+    "workspace_id is missing/unknown.",
+    "project_id is missing/unknown."
+  ],
+  "degraded_fields": [
+    "project_id",
+    "workspace_id"
+  ],
+  "normalized_scope": {
+    "workspace_id": "unknown",
+    "project_id": "unknown",
+    "policy_scope": "default>workspace:ws_alpha>project:pj_market",
+    "alias_scope": "default>workspace:ws_alpha>project:pj_market"
+  },
+  "action": "degraded_continue"
+}

@@ -1,0 +1,45 @@
+{
+  "handoff_id": "handoff-20260315-003",
+  "request_id": "exec-req-001",
+  "brief_id": "council-poc-brief-001",
+  "approval_status": "approved",
+  "approved_by": "owner_manual",
+  "approved_at": "2026-03-15T16:20:00+08:00",
+  "codex_ready_payload": {
+    "goal": "Clarify llm_assisted usage instructions without changing runtime behavior.",
+    "scope": [
+      "docs-only wording update"
+    ],
+    "non_goals": [
+      "no code edits"
+    ],
+    "allowed_files": [
+      "docs/llm-assisted.md",
+      "README.md"
+    ],
+    "constraints": [
+      "do not change workflow graph",
+      "do not edit strategy_agent/crawler/graph/tests",
+      "do not add new runtime features"
+    ],
+    "validation_steps": [
+      "git status --short --branch",
+      "confirm only scoped docs files changed"
+    ],
+    "delivery_format": [
+      "change summary",
+      "changed files",
+      "git status",
+      "next-step recommendation"
+    ],
+    "repo_context": {
+      "repo": "AgentCommerce",
+      "branch": "main"
+    }
+  },
+  "validation_snapshot": {
+    "dry_run_status": "valid",
+    "dry_run_errors": []
+  },
+  "notes": "Manual review passed. Scope and constraints are clear."
+}

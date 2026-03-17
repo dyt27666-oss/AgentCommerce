@@ -1,0 +1,33 @@
+﻿{
+  "artifact_type": "runtime_reconcile_report",
+  "schema_version": "runtime.reconcile.v0.1",
+  "failure_id": "fail-manual-001",
+  "publish_id": null,
+  "source_module": "runtime_publish_reconcile_hook",
+  "reconcile_scope": "publish_failure",
+  "detected_at": "2026-03-17T22:03:00+08:00",
+  "reconcile_status": "manual_required",
+  "before": {
+    "active_alias_version": null,
+    "publish_status": null
+  },
+  "after": {
+    "expected_active_alias_version": null,
+    "reported_after_active_alias_version": null
+  },
+  "current_runtime_state": {
+    "active_alias_version": "v1",
+    "result_status": null,
+    "config_snapshot_provided": true
+  },
+  "missing_artifacts": [
+    "policy_publish_request",
+    "policy_publish_result"
+  ],
+  "repaired_artifacts": [],
+  "residual_risk": [
+    "publish_id missing; cannot fully correlate artifacts"
+  ],
+  "recommended_action": "manual_publish_review",
+  "audit_trace": {}
+}

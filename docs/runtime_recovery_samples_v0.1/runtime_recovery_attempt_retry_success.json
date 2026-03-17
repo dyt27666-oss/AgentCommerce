@@ -1,0 +1,23 @@
+﻿{
+  "artifact_type": "runtime_recovery_attempt",
+  "schema_version": "runtime.recovery.v0.1",
+  "failure_id": "fail-aa",
+  "related_request_id": "req-101",
+  "publish_id": null,
+  "source_module": "alias_semantic_regression_suite",
+  "failure_type": "artifact_write_failure",
+  "failure_stage": "artifact_write",
+  "detected_at": "2026-03-17T21:00:00+08:00",
+  "recovery_action": "retry",
+  "recovery_status": "completed",
+  "operator": "system",
+  "attempt_no": 1,
+  "max_attempts": 3,
+  "idempotency_key": "1c9877ec37f63bca4e102f13f7a33b79",
+  "attempt_result": "success",
+  "error_detail": "stub executor simulated successful retry",
+  "audit_trace": {
+    "runner": "runtime_recovery_attempt_runner.v0.1",
+    "executor_mode": "stub"
+  }
+}

@@ -1,0 +1,37 @@
+﻿{
+  "version": "owner.intent.alias.v0.1",
+  "section_aliases": {
+    "scope": ["scope", "范围", "边界", "范围太宽", "太宽"],
+    "steps": ["steps", "步骤", "流程"],
+    "risk": ["risk", "风险", "风险分析", "风险点"],
+    "review": ["review", "评审", "审查", "复核"],
+    "decision_rationale": ["decision_rationale", "决策依据", "理由", "依据"],
+    "execution_constraints": ["execution_constraints", "执行边界", "执行约束", "边界写清楚", "约束写清楚"],
+    "no_go_zones": ["no_go_zones", "禁区", "不要做", "禁止操作"],
+    "receipts": ["receipt", "receipts", "回执", "收据", "日志回执"],
+    "readiness": ["readiness", "可执行", "准备就绪", "不能执行", "就绪状态"]
+  },
+  "role_aliases": {
+    "planner": ["planner", "计划", "规划", "计划员"],
+    "researcher": ["researcher", "研究", "调研", "研究员"],
+    "critic": ["critic", "批判", "挑错", "审辩", "质检"],
+    "strategist": ["strategist", "策略", "参谋", "战略"],
+    "reviewer": ["reviewer", "复审", "复核", "审核员"],
+    "reporter": ["reporter", "汇总", "报告", "报告员"]
+  },
+  "action_aliases": {
+    "recheck": ["recheck", "重看", "复查", "再看一遍"],
+    "rewrite": ["rewrite", "重写", "改写"],
+    "redo": ["redo", "重做", "重新做"],
+    "refine": ["refine", "打磨", "优化", "完善"],
+    "tighten": ["tighten", "收紧", "缩小", "约束更严"],
+    "clarify": ["clarify", "写清楚", "澄清", "明确"],
+    "summarize": ["summarize", "总结", "汇总一下"],
+    "resubmit": ["resubmit", "重新提交", "再提交", "提交审核"]
+  },
+  "severity_markers": {
+    "high": ["不行", "拒绝", "严重", "高风险", "不能"],
+    "medium": ["不够", "不足", "太宽", "需要修改", "需修正"],
+    "low": ["建议", "可优化", "注释", "备注"]
+  }
+}

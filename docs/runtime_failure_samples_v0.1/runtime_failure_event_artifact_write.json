@@ -1,0 +1,19 @@
+﻿{
+  "artifact_type": "runtime_failure_event",
+  "schema_version": "runtime.failure.v0.1",
+  "failure_id": "fail-33333333333333333333333333333333",
+  "related_request_id": "req-artifact-001",
+  "publish_id": null,
+  "source_module": "alias_semantic_regression_suite",
+  "failure_type": "artifact_write_failure",
+  "failure_stage": "artifact_write",
+  "detected_at": "2026-03-17T18:02:00+08:00",
+  "recovery_action": "retry",
+  "recovery_status": "pending",
+  "operator": "system",
+  "audit_trace": {
+    "exception_type": "OSError",
+    "exception_message": "permission denied while writing artifact",
+    "stack_hint": "OSError: permission denied while writing artifact"
+  }
+}
