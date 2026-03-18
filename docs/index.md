@@ -10,6 +10,10 @@
   Phase 6.5 ~ 7.1 交付总表、测试证据、完成度与剩余缺口。
 - [Example Flow v1](example-flow-v1.md)  
   最典型端到端流程（Feishu -> Governance -> Audit -> Recovery）。
+- [Testing Playbook v1](testing-playbook-v1.md)  
+  测试与展示阶段最小可执行方案（A/B/C 场景、落盘证据、验收清单）。
+- [Git Operations Playbook v1](git-operations-playbook-v1.md)  
+  稳定提交、tag 检查点、回滚恢复与演示前 Git 检查清单。
 
 ## Governance
 
