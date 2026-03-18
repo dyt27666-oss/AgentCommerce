@@ -17,11 +17,21 @@ def resolve_webhook_url(explicit_webhook_url: str | None = None) -> str:
     return os.getenv("FEISHU_WEBHOOK_URL", "").strip()
 
 
+def _apply_required_keyword(text: str) -> str:
+    required = os.getenv("AGENTCOMMERCE_FEISHU_REQUIRED_KEYWORD", "").strip()
+    if not required:
+        return text
+    if required in text:
+        return text
+    return f"{text}\n{required}"
+
+
 def send_text(*, text: str, webhook_url: str | None = None, timeout_sec: int = 10) -> dict[str, Any]:
     url = resolve_webhook_url(webhook_url)
     if not url:
         raise ValueError("Missing Feishu webhook URL.")
-    payload = {"msg_type": "text", "content": {"text": text}}
+    payload_text = _apply_required_keyword(text)
+    payload = {"msg_type": "text", "content": {"text": payload_text}}
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
     with request.urlopen(req, timeout=timeout_sec) as resp:
@@ -30,4 +40,3 @@ def send_text(*, text: str, webhook_url: str | None = None, timeout_sec: int = 1
         return json.loads(body)
     except Exception:
         return {"raw_response": body}
-

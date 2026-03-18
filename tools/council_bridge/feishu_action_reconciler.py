@@ -105,6 +105,15 @@ def _to_message_payload(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _is_bridge_system_echo(payload: dict[str, Any]) -> bool:
+    text = str(payload.get("text") or "").strip()
+    if not text:
+        return False
+    # Ignore bridge-generated summaries/receipts to avoid self-triggering
+    # action keywords such as "needs_fix"/"dispatch" embedded in reply text.
+    return text.startswith("【Bridge")
+
+
 def _get_tenant_access_token(app_id: str, app_secret: str, base_url: str) -> str:
     url = f"{base_url.rstrip('/')}/open-apis/auth/v3/tenant_access_token/internal"
     payload = {"app_id": app_id, "app_secret": app_secret}
@@ -183,6 +192,8 @@ def reconcile_once(
     results: list[dict[str, Any]] = []
     for item in reversed(to_process):
         payload = _to_message_payload(item)
+        if _is_bridge_system_echo(payload):
+            continue
         kwargs = {
             "source_artifact": source_artifact,
             "stage": action_stage,
@@ -208,7 +219,7 @@ def main() -> None:
     parser.add_argument("--app-secret", default=os.getenv("AGENTCOMMERCE_FEISHU_APP_SECRET", ""))
     parser.add_argument("--chat-id", default=os.getenv("AGENTCOMMERCE_FEISHU_CHAT_ID", ""))
     parser.add_argument("--base-url", default="https://open.feishu.cn")
-    parser.add_argument("--interval-sec", type=int, default=5)
+    parser.add_argument("--interval-sec", type=float, default=1.0)
     parser.add_argument("--max-polls", type=int, default=1, help="Fallback scanner: one-shot by default.")
     parser.add_argument("--page-size", type=int, default=20)
     parser.add_argument("--source-artifact", default="artifacts/council_codex_dispatch_ready.json")
@@ -274,7 +285,7 @@ def main() -> None:
 
         if args.max_polls > 0 and poll_count >= args.max_polls:
             break
-        time.sleep(max(1, args.interval_sec))
+        time.sleep(max(0.2, float(args.interval_sec)))
 
     reconciler_result = {
         "event_time": _now_iso(),

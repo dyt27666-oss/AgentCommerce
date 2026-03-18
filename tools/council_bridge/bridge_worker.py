@@ -80,7 +80,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Bridge chat worker.")
     parser.add_argument("--db-path", default=str(DEFAULT_DB_PATH))
     parser.add_argument("--loop", action="store_true")
-    parser.add_argument("--interval-sec", type=int, default=2)
+    parser.add_argument("--interval-sec", type=float, default=1.0)
     parser.add_argument("--max-iterations", type=int, default=0, help="0 means unlimited in loop mode.")
     parser.add_argument("--webhook-url", default="")
     args = parser.parse_args()
@@ -98,9 +98,8 @@ def main() -> None:
         print(json.dumps(result, ensure_ascii=False))
         if args.max_iterations > 0 and count >= args.max_iterations:
             break
-        time.sleep(max(1, args.interval_sec))
+        time.sleep(max(0.2, float(args.interval_sec)))
 
 
 if __name__ == "__main__":
     main()
-
