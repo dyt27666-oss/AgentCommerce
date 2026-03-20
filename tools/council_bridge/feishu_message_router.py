@@ -476,6 +476,8 @@ def route_message(
         "confirmation_required": permission_decision.confirmation_required,
         "missing_permission_reason": permission_decision.missing_permission_reason,
         "recommended_grant_phrase": permission_decision.recommended_grant_phrase,
+        "response_profile": "workflow_control",
+        "artifact_visibility": "internal_audit",
     }
 
     linked = _safe_load_json(Path(source_artifact))
@@ -577,6 +579,8 @@ def route_message(
                 )
                 result["route_type"] = "council"
                 result["routed_entrypoint"] = "owner_confirmed_execution_dispatch"
+                result["response_profile"] = "workflow_control"
+                result["artifact_visibility"] = "internal_audit"
                 result["observe_only"] = False
                 result["execution_gate_status"] = "ready" if dispatch_result.get("dispatch_status") == "accepted" else "blocked"
                 result["execution_brief_path"] = council_execution_brief_path.as_posix() if council_execution_brief_path.exists() else ""
@@ -600,6 +604,8 @@ def route_message(
             write_execution_handoff_gate_result(gate_result, council_execution_gate_result_path)
             result["route_type"] = "council"
             result["routed_entrypoint"] = "execution_handoff_observer"
+            result["response_profile"] = "workflow_control"
+            result["artifact_visibility"] = "internal_audit"
             result["observe_only"] = True
             result["execution_gate_status"] = "ready" if gate_result.get("execution_handoff_ready") else "blocked"
 
@@ -630,6 +636,8 @@ def route_message(
             if not confirm_allowed:
                 result["route_type"] = "council"
                 result["routed_entrypoint"] = "council_owner_confirmed_apply"
+                result["response_profile"] = "workflow_control"
+                result["artifact_visibility"] = "internal_audit"
                 result["observe_only"] = True
                 result["mapping_status"] = "not_applicable"
                 result["validation_status"] = "not_applicable"
@@ -655,6 +663,8 @@ def route_message(
             )
             result["route_type"] = "council"
             result["routed_entrypoint"] = "council_owner_confirmed_apply"
+            result["response_profile"] = "workflow_control"
+            result["artifact_visibility"] = "internal_audit"
             result["observe_only"] = False
             result["mapping_status"] = "mapped" if apply_receipt.get("apply_status") == "applied" else "blocked"
             result["validation_status"] = "applied" if apply_receipt.get("apply_status") == "applied" else "blocked"
@@ -694,6 +704,8 @@ def route_message(
             if not role_confirm_allowed:
                 result["route_type"] = "council"
                 result["routed_entrypoint"] = "council_role_rework_apply"
+                result["response_profile"] = "workflow_control"
+                result["artifact_visibility"] = "internal_audit"
                 result["observe_only"] = True
                 result["result_status"] = "ignored"
                 result["ignored_reason"] = "role rework confirm keyword detected but source is not owner/bridge protocol."
@@ -713,6 +725,8 @@ def route_message(
             )
             result["route_type"] = "council"
             result["routed_entrypoint"] = "council_role_rework_apply"
+            result["response_profile"] = "workflow_control"
+            result["artifact_visibility"] = "internal_audit"
             result["observe_only"] = False
             result["mapping_status"] = "mapped" if apply_receipt.get("apply_status") == "applied" else "blocked"
             result["validation_status"] = "applied" if apply_receipt.get("apply_status") == "applied" else "blocked"
@@ -735,6 +749,8 @@ def route_message(
             write_role_rework_mapping_result(role_mapping, council_role_rework_mapping_result_path)
             result["route_type"] = "council"
             result["routed_entrypoint"] = "council_role_rework_observer"
+            result["response_profile"] = "workflow_control"
+            result["artifact_visibility"] = "internal_audit"
             result["observe_only"] = True
             result["mapping_status"] = "mapped"
 
@@ -767,6 +783,8 @@ def route_message(
 
         result["route_type"] = "council"
         result["routed_entrypoint"] = "council_feedback_observer"
+        result["response_profile"] = "workflow_control"
+        result["artifact_visibility"] = "internal_audit"
         result["observe_only"] = True
         result["mapping_status"] = "mapped" if mapping_result.is_mapped else "ignored"
         result["ignored_reason"] = mapping_result.ignored_reason or ""
@@ -801,6 +819,8 @@ def route_message(
     if action is None:
         if result["detected_mode"] == MODE_WORKFLOW_REQUEST:
             result["route_type"] = "workflow_request"
+            result["response_profile"] = "workflow_control"
+            result["artifact_visibility"] = "owner_visible"
             result["result_status"] = "needs_owner_action_protocol"
             result["ignored_reason"] = "workflow request detected but no executable protocol action was provided."
             result["result_info"] = (
@@ -841,6 +861,8 @@ def route_message(
 
         task_payload = {
             "route_type": "chat",
+            "response_profile": "chat_conversation",
+            "artifact_visibility": "owner_visible",
             "source": payload["source"],
             "message_payload": payload,
             "source_artifact": source_artifact,
@@ -851,6 +873,8 @@ def route_message(
         task_id = enqueue_task(task_payload, db_path=queue_db_path, route_type="chat")
         result["route_type"] = "chat"
         result["routed_entrypoint"] = "chat_bridge_queue"
+        result["response_profile"] = "chat_conversation"
+        result["artifact_visibility"] = "owner_visible"
         result["task_id"] = task_id
         result["result_status"] = "queued"
         result["result_info"] = "free text queued for chat bridge worker."
@@ -898,6 +922,8 @@ def route_message(
         return result
 
     result["route_type"] = "action"
+    result["response_profile"] = "workflow_control"
+    result["artifact_visibility"] = "internal_audit"
     result["triggered_command"] = " ".join(command)
     status, info = runner(command)
     result["result_status"] = status

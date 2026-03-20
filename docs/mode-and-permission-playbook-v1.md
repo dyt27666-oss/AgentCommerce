@@ -19,6 +19,8 @@
 - `detection_reason`
 - `confidence`
 - `rule_hit`
+- `response_profile`（`chat_conversation` / `workflow_control`）
+- `artifact_visibility`（`owner_visible` / `internal_audit`）
 
 ## 2. How Router Avoids Misrouting
 
@@ -81,4 +83,3 @@
    - 查看聊天链路权限上下文与执行结果
 3. `artifacts/council_feishu_loop_demo_summary.json`
    - 查看 owner-facing summary（task/outcome/risk/next action/evidence）
-

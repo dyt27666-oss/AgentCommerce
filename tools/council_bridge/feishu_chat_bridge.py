@@ -295,6 +295,8 @@ def process_chat_task(
     }
     request_obj = {
         "route_type": "chat",
+        "response_profile": str(payload.get("response_profile") or "chat_conversation"),
+        "artifact_visibility": str(payload.get("artifact_visibility") or "owner_visible"),
         "source": message_payload.get("source", "unknown"),
         "task_id": task.get("task_id"),
         "owner_id": message_payload.get("sender_id"),
@@ -314,6 +316,8 @@ def process_chat_task(
     reply_text = _build_reply_text(user_text=user_text, correlated=correlated)
     result = {
         "route_type": "chat",
+        "response_profile": str(payload.get("response_profile") or "chat_conversation"),
+        "artifact_visibility": str(payload.get("artifact_visibility") or "owner_visible"),
         "source": message_payload.get("source", "unknown"),
         "task_id": task.get("task_id"),
         "owner_id": message_payload.get("sender_id"),

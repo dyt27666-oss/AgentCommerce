@@ -163,6 +163,8 @@ def test_worker_consumes_chat_task_and_writes_result(tmp_path: Path, monkeypatch
     assert (tmp_path / "chat_res.json").exists()
     chat_res = json.loads((tmp_path / "chat_res.json").read_text(encoding="utf-8"))
     assert chat_res["reply_status"] == "sent"
+    assert chat_res["response_profile"] == "chat_conversation"
+    assert chat_res["artifact_visibility"] == "owner_visible"
     assert "你刚刚的问题" not in sent.get("text", "")
     assert "聊天模式" in sent.get("text", "")
 

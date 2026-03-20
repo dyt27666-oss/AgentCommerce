@@ -249,6 +249,8 @@ def test_router_records_mode_detection_fields_for_plain_chat(tmp_path: Path) -> 
     assert result["detected_mode"] == "chat"
     assert result["detection_reason"]
     assert result["rule_hit"] == "chat_fallback"
+    assert result["response_profile"] == "chat_conversation"
+    assert result["artifact_visibility"] == "owner_visible"
 
 
 def test_router_explicit_workflow_request_not_treated_as_idle_chat(tmp_path: Path) -> None:
@@ -266,3 +268,4 @@ def test_router_explicit_workflow_request_not_treated_as_idle_chat(tmp_path: Pat
     assert result["detected_mode"] == "workflow_request"
     assert result["route_type"] == "workflow_request"
     assert result["result_status"] == "needs_owner_action_protocol"
+    assert result["response_profile"] == "workflow_control"
