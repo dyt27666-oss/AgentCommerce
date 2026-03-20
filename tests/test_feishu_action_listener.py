@@ -151,6 +151,17 @@ def test_worker_consumes_chat_task_and_writes_result(tmp_path: Path, monkeypatch
     monkeypatch.setattr(chat_mod, "CHAT_RESULT_PATH", tmp_path / "chat_res.json")
     monkeypatch.setattr(
         chat_mod,
+        "generate_chat_reply",
+        lambda **kwargs: {
+            "reply_text": "这是LLM回复",
+            "response_source": "llm",
+            "llm_provider": "silra_compatible",
+            "llm_model": "glm-4.7",
+            "llm_error": "",
+        },
+    )
+    monkeypatch.setattr(
+        chat_mod,
         "send_text",
         lambda **kwargs: sent.update({"text": str(kwargs.get("text") or "")}) or {"code": 0, "msg": "ok"},
     )
@@ -163,10 +174,11 @@ def test_worker_consumes_chat_task_and_writes_result(tmp_path: Path, monkeypatch
     assert (tmp_path / "chat_res.json").exists()
     chat_res = json.loads((tmp_path / "chat_res.json").read_text(encoding="utf-8"))
     assert chat_res["reply_status"] == "sent"
+    assert chat_res["response_source"] == "llm"
+    assert chat_res["llm_model"] == "glm-4.7"
     assert chat_res["response_profile"] == "chat_conversation"
     assert chat_res["artifact_visibility"] == "owner_visible"
-    assert "你刚刚的问题" not in sent.get("text", "")
-    assert "聊天模式" in sent.get("text", "")
+    assert sent.get("text", "") == "这是LLM回复"
 
 
 def test_worker_reply_failure_writes_error_artifact(tmp_path: Path, monkeypatch) -> None:
@@ -183,6 +195,7 @@ def test_worker_reply_failure_writes_error_artifact(tmp_path: Path, monkeypatch)
 
     monkeypatch.setattr(chat_mod, "CHAT_REQUEST_PATH", tmp_path / "chat_req.json")
     monkeypatch.setattr(chat_mod, "CHAT_RESULT_PATH", tmp_path / "chat_res.json")
+    monkeypatch.setattr(chat_mod, "generate_chat_reply", lambda **kwargs: (_ for _ in ()).throw(RuntimeError("llm_down")))
     monkeypatch.setattr(chat_mod, "send_text", lambda **kwargs: (_ for _ in ()).throw(RuntimeError("send_failed")))
 
     from tools.council_bridge import bridge_worker as worker_mod
@@ -193,6 +206,8 @@ def test_worker_reply_failure_writes_error_artifact(tmp_path: Path, monkeypatch)
     chat_res = json.loads((tmp_path / "chat_res.json").read_text(encoding="utf-8"))
     assert chat_res["reply_status"] == "failed"
     assert "send_failed" in chat_res["error_message"]
+    assert chat_res["response_source"] == "rule_fallback"
+    assert "llm_down" in chat_res["llm_error"]
 
 
 def test_group_config_can_block_chat_lane(tmp_path: Path, monkeypatch) -> None:

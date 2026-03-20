@@ -10,6 +10,7 @@ from typing import Any
 
 from tools.council_bridge.feishu_sender import send_text
 from tools.council_bridge.permission_policy import evaluate_permission_context
+from tools.council_bridge.chat_llm_adapter import generate_chat_reply
 
 
 CHAT_REQUEST_PATH = Path("artifacts") / "council_feishu_chat_bridge_request.json"
@@ -314,6 +315,24 @@ def process_chat_task(
     _write_json(request_artifact_path, request_obj)
 
     reply_text = _build_reply_text(user_text=user_text, correlated=correlated)
+    response_source = "rule_fallback"
+    llm_provider = ""
+    llm_model = ""
+    llm_error = ""
+    try:
+        llm_result = generate_chat_reply(
+            user_text=user_text,
+            correlated=correlated,
+            permission_context=permission.to_dict(),
+        )
+        reply_text = str(llm_result.get("reply_text") or reply_text)
+        response_source = str(llm_result.get("response_source") or "llm")
+        llm_provider = str(llm_result.get("llm_provider") or "")
+        llm_model = str(llm_result.get("llm_model") or "")
+        llm_error = str(llm_result.get("llm_error") or "")
+    except Exception as exc:
+        llm_error = str(exc)
+
     result = {
         "route_type": "chat",
         "response_profile": str(payload.get("response_profile") or "chat_conversation"),
@@ -333,6 +352,10 @@ def process_chat_task(
         "reply_preview": reply_text[:300],
         "completed_at": _now_iso(),
         "permission_context": permission.to_dict(),
+        "response_source": response_source,
+        "llm_provider": llm_provider,
+        "llm_model": llm_model,
+        "llm_error": llm_error,
     }
     try:
         if force_send_error:
