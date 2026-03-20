@@ -1,4 +1,4 @@
-"""Minimal chat LLM adapter for Feishu chat lane."""
+﻿"""Minimal chat LLM adapter for Feishu chat lane."""
 
 from __future__ import annotations
 
@@ -54,6 +54,7 @@ def _clean_text(value: str) -> str:
 def generate_chat_reply(
     *,
     user_text: str,
+    conversation_history: list[dict[str, str]] | None,
     correlated: dict[str, Any],
     permission_context: dict[str, Any],
 ) -> dict[str, Any]:
@@ -69,18 +70,30 @@ def generate_chat_reply(
     confirmation_required = bool(permission_context.get("confirmation_required"))
 
     system_prompt = (
-        "你是 AgentCommerce 的聊天助手，目标是自然、简洁、可执行。"
-        "当前是聊天模式，不要伪装执行已经发生。"
-        "如果用户请求执行/修改/本地命令且权限不足，要明确提示需授权。"
-        "不要输出 JSON、不要输出模板标题、不要复读系统字段。"
+        "你是 AgentCommerce 的聊天助手。"
+        "请直接回答用户问题，语气自然、简洁、有帮助。"
+        "不要输出“进入聊天模式”等流程提示，不要输出 JSON 模板。"
+        "如果用户要求执行、修改、本地命令，但当前权限不足，"
+        "明确说明缺少权限并给出一句授权示例。"
     )
     user_prompt = (
         f"用户消息：{_clean_text(user_text)}\n"
-        f"上下文request_id：{request_id or 'n/a'}\n"
+        f"上下文 request_id：{request_id or 'n/a'}\n"
         f"当前授权级别：{granted_level}\n"
         f"是否需要二次确认：{confirmation_required}\n"
-        "请直接给出中文回复。"
+        "请仅输出中文回复正文。"
     )
+
+    history = conversation_history or []
+    model_messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
+    for item in history:
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "").strip().lower()
+        text = _clean_text(str(item.get("text") or ""))
+        if role in {"user", "assistant"} and text:
+            model_messages.append({"role": role, "content": text})
+    model_messages.append({"role": "user", "content": user_prompt})
 
     last_error: Exception | None = None
     for base_url in _base_urls():
@@ -91,12 +104,7 @@ def generate_chat_reply(
                 base_url=base_url,
                 temperature=0.3,
             )
-            response = model.invoke(
-                [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ]
-            )
+            response = model.invoke(model_messages)
             content = getattr(response, "content", "")
             if isinstance(content, list):
                 content = "".join(
@@ -118,4 +126,3 @@ def generate_chat_reply(
             last_error = exc
 
     raise RuntimeError(f"chat llm invocation failed: {last_error}")
-

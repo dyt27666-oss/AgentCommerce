@@ -210,6 +210,60 @@ def test_worker_reply_failure_writes_error_artifact(tmp_path: Path, monkeypatch)
     assert "llm_down" in chat_res["llm_error"]
 
 
+def test_chat_memory_window_is_passed_and_persisted(tmp_path: Path, monkeypatch) -> None:
+    queue_db = tmp_path / "q.db"
+    from tools.council_bridge import feishu_chat_bridge as chat_mod
+    from tools.council_bridge import bridge_worker as worker_mod
+
+    monkeypatch.setattr(chat_mod, "CHAT_REQUEST_PATH", tmp_path / "chat_req.json")
+    monkeypatch.setattr(chat_mod, "CHAT_RESULT_PATH", tmp_path / "chat_res.json")
+    monkeypatch.setattr(worker_mod, "WORKER_RESULT_PATH", tmp_path / "worker_res.json")
+    monkeypatch.setattr(chat_mod, "send_text", lambda **kwargs: {"code": 0, "msg": "ok"})
+
+    calls: list[dict] = []
+
+    def _fake_llm(**kwargs):
+        calls.append(kwargs)
+        return {
+            "reply_text": f"reply-{len(calls)}",
+            "response_source": "llm",
+            "llm_provider": "mock",
+            "llm_model": "mock-model",
+            "llm_error": "",
+        }
+
+    monkeypatch.setattr(chat_mod, "generate_chat_reply", _fake_llm)
+
+    router_mod.route_message(
+        _payload(text="第一句", message_id="m_mem_1", chat_id="oc_mem"),
+        source_artifact="artifacts/council_codex_dispatch_ready.json",
+        dedupe_state_path=tmp_path / "dedupe.json",
+        route_result_path=tmp_path / "route1.json",
+        queue_db_path=queue_db,
+    )
+    run_worker_once(db_path=queue_db)
+    assert calls[0]["conversation_history"] == []
+
+    router_mod.route_message(
+        _payload(text="第二句", message_id="m_mem_2", chat_id="oc_mem"),
+        source_artifact="artifacts/council_codex_dispatch_ready.json",
+        dedupe_state_path=tmp_path / "dedupe.json",
+        route_result_path=tmp_path / "route2.json",
+        queue_db_path=queue_db,
+    )
+    run_worker_once(db_path=queue_db)
+
+    history = calls[1]["conversation_history"]
+    assert len(history) == 2
+    assert history[0]["role"] == "user" and history[0]["text"] == "第一句"
+    assert history[1]["role"] == "assistant" and history[1]["text"] == "reply-1"
+
+    chat_res = json.loads((tmp_path / "chat_res.json").read_text(encoding="utf-8"))
+    assert chat_res["chat_memory_enabled"] is True
+    assert chat_res["chat_memory_messages_used"] == 2
+    assert chat_res["chat_memory_messages"] == 4
+
+
 def test_group_config_can_block_chat_lane(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(
         router_mod,

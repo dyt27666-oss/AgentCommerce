@@ -11,6 +11,7 @@ from typing import Any
 from tools.council_bridge.feishu_sender import send_text
 from tools.council_bridge.permission_policy import evaluate_permission_context
 from tools.council_bridge.chat_llm_adapter import generate_chat_reply
+from tools.council_bridge.chat_memory_store import append_turn, load_recent_messages
 
 
 CHAT_REQUEST_PATH = Path("artifacts") / "council_feishu_chat_bridge_request.json"
@@ -22,6 +23,7 @@ OWNER_FINAL_SUMMARY_PATH = Path("artifacts") / "council_owner_final_review_summa
 LOCAL_CHECK_PREFIX = "查:"
 LOCAL_PERMISSION_PREFIX = "允许本地权限："
 LEGACY_LOCAL_CHECK_CONFIRM_TOKEN = "CONFIRM_LOCAL_CHECK"
+DEFAULT_CHAT_MEMORY_TURNS = 6
 
 
 def _now_iso() -> str:
@@ -242,11 +244,7 @@ def _build_reply_text(*, user_text: str, correlated: dict[str, Any]) -> str:
             f"{context_suffix}"
         )
 
-    return (
-        "收到，我会按聊天模式处理，不会自动触发工作流执行。"
-        "\n如果你要推进执行，请发送明确动作词（例如 dispatch）。"
-        f"{context_suffix}"
-    )
+    return f"我在。你可以继续说具体问题；若要进入执行流，请明确发送动作词（如 dispatch）。{context_suffix}"
 
 
 def _normalize_user_text(raw_text: str) -> str:
@@ -312,6 +310,15 @@ def process_chat_task(
     }
     permission = evaluate_permission_context(user_text)
     request_obj["permission_context"] = permission.to_dict()
+
+    chat_id = str(message_payload.get("chat_id") or "")
+    memory_window_turns = int(payload.get("chat_memory_turns") or DEFAULT_CHAT_MEMORY_TURNS)
+    recent_messages = load_recent_messages(chat_id=chat_id, max_turns=memory_window_turns)
+    request_obj["chat_memory"] = {
+        "enabled": True,
+        "memory_window_turns": memory_window_turns,
+        "memory_messages_used": len(recent_messages),
+    }
     _write_json(request_artifact_path, request_obj)
 
     reply_text = _build_reply_text(user_text=user_text, correlated=correlated)
@@ -322,6 +329,7 @@ def process_chat_task(
     try:
         llm_result = generate_chat_reply(
             user_text=user_text,
+            conversation_history=recent_messages,
             correlated=correlated,
             permission_context=permission.to_dict(),
         )
@@ -356,7 +364,17 @@ def process_chat_task(
         "llm_provider": llm_provider,
         "llm_model": llm_model,
         "llm_error": llm_error,
+        "chat_memory_enabled": True,
+        "chat_memory_window_turns": memory_window_turns,
+        "chat_memory_messages_used": len(recent_messages),
     }
+    memory_meta = append_turn(
+        chat_id=chat_id,
+        user_text=user_text,
+        assistant_text=reply_text,
+        max_turns=memory_window_turns,
+    )
+    result.update(memory_meta)
     try:
         if force_send_error:
             raise RuntimeError("forced_send_error")
