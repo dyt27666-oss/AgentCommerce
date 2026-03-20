@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.council_bridge.feishu_sender import send_text
+from tools.council_bridge.permission_policy import evaluate_permission_context
 
 
 CHAT_REQUEST_PATH = Path("artifacts") / "council_feishu_chat_bridge_request.json"
@@ -94,6 +95,9 @@ def _is_workflow_control_intent(user_text: str) -> bool:
         "needs_fix",
         "reject",
         "hold",
+        "开始执行",
+        "运行测试",
+        "execute",
         "apply_suggested_transition",
         "confirm_transition",
         "生成下一条指令",
@@ -198,50 +202,77 @@ def _query_local_feishu_processes() -> tuple[bool, str]:
 
 
 def _build_reply_text(*, user_text: str, correlated: dict[str, Any]) -> str:
-    summary = _build_context_summary(correlated)
+    req = correlated.get("request_id") or "n/a"
+    context_suffix = f"\n上下文 request_id={req}" if req != "n/a" else ""
 
     if _is_workflow_control_intent(user_text):
         return (
-            "【Bridge 工作模式】\n"
-            f"你刚刚的问题：{user_text}\n"
-            f"{summary}\n"
-            "建议：如果你要继续执行动作，请直接回复协议动作词（dispatch / approved / needs_fix / reject / hold）；"
-            "如果你需要我生成下一条 Codex 指令，请明确说“生成下一条指令”。"
+            "这是执行请求，不按聊天消息直接触发，避免误执行。"
+            "\n请发送协议动作词：dispatch / approved / needs_fix / reject / hold"
+            "\n或直接说：生成下一条指令。"
+            f"{context_suffix}"
         )
 
     if _is_local_machine_question(user_text):
         cmd_text = _extract_local_permission_command(user_text)
         if _is_local_feishu_query_intent(cmd_text):
+            permission = evaluate_permission_context(user_text)
             if not _has_local_check_confirmation(user_text):
                 return (
-                    "【Bridge 聊天模式】\n"
-                    f"你刚刚的问题：{user_text}\n"
-                    "这是本机只读查询请求。请使用授权前缀发送：\n"
-                    "示例1：允许本地权限：查飞书是否运行\n"
-                    "示例2：查: 飞书是否运行\n"
-                    "说明：未命中协议前缀时不会执行本机命令。"
+                    "这是本机只读查询请求，但当前授权不足。"
+                    f"\n缺少权限：requested={permission.requested_permission_level}, granted={permission.granted_permission_level}"
+                    f"\n原因：{permission.missing_permission_reason or '需要本地执行确认'}"
+                    "\n请用以下任一授权格式："
+                    "\n- 允许本地权限：查飞书是否运行"
+                    "\n- 查: 飞书是否运行"
+                    f"{context_suffix}"
                 )
 
             ok, detail = _query_local_feishu_processes()
             return (
-                "【Bridge 聊天模式】\n"
-                f"你刚刚的问题：{user_text}\n"
-                f"本机只读查询结果：{'成功' if ok else '失败'}\n"
-                f"{detail}"
+                f"本机只读查询{'成功' if ok else '失败'}。"
+                f"\n{detail}"
+                f"{context_suffix}"
             )
 
         return (
-            "【Bridge 聊天模式】\n"
-            f"你刚刚的问题：{user_text}\n"
-            "说明：我当前在 Bridge 聊天通道里，无法直接读取你电脑正在运行的应用列表。\n"
-            "你可以在本机执行 `tasklist`（Windows）后把输出贴给我，我可以帮你做结构化解读。"
+            "你提到的是本机环境查询。当前聊天通道不会直接执行通用本机命令。"
+            "\n如果你要查飞书进程，请发送：查: 飞书是否运行"
+            f"{context_suffix}"
         )
 
     return (
-        "【Bridge 聊天模式】\n"
-        f"你刚刚的问题：{user_text}\n"
-        "我已收到并按聊天方式处理，这条消息不会自动触发执行动作。"
+        "收到，我会按聊天模式处理，不会自动触发工作流执行。"
+        "\n如果你要推进执行，请发送明确动作词（例如 dispatch）。"
+        f"{context_suffix}"
     )
+
+
+def _normalize_user_text(raw_text: str) -> str:
+    text = str(raw_text or "").strip()
+    if not text:
+        return ""
+    if not (text.startswith("{") and text.endswith("}")):
+        return text
+    try:
+        payload = json.loads(text)
+    except Exception:
+        return text
+    if not isinstance(payload, dict):
+        return text
+    if isinstance(payload.get("text"), str) and payload.get("text", "").strip():
+        return payload["text"].strip()
+    rich = payload.get("content")
+    if not isinstance(rich, list):
+        return text
+    lines: list[str] = []
+    for row in rich:
+        if not isinstance(row, list):
+            continue
+        row_text = "".join(str(cell.get("text") or "") for cell in row if isinstance(cell, dict))
+        if row_text.strip():
+            lines.append(row_text.strip())
+    return "\n".join(lines) if lines else text
 
 
 def process_chat_task(
@@ -256,7 +287,7 @@ def process_chat_task(
     result_artifact_path = result_artifact_path or CHAT_RESULT_PATH
     payload = task.get("payload", {})
     message_payload = payload.get("message_payload", {})
-    user_text = str(message_payload.get("text") or "")
+    user_text = _normalize_user_text(str(message_payload.get("text") or ""))
     correlated = {
         "request_id": payload.get("correlated_request_id"),
         "brief_id": payload.get("correlated_brief_id"),
@@ -276,6 +307,8 @@ def process_chat_task(
         "user_text": user_text,
         "created_at": _now_iso(),
     }
+    permission = evaluate_permission_context(user_text)
+    request_obj["permission_context"] = permission.to_dict()
     _write_json(request_artifact_path, request_obj)
 
     reply_text = _build_reply_text(user_text=user_text, correlated=correlated)
@@ -295,6 +328,7 @@ def process_chat_task(
         "correlated_handoff_id": correlated["handoff_id"],
         "reply_preview": reply_text[:300],
         "completed_at": _now_iso(),
+        "permission_context": permission.to_dict(),
     }
     try:
         if force_send_error:

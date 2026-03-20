@@ -146,9 +146,14 @@ def test_worker_consumes_chat_task_and_writes_result(tmp_path: Path, monkeypatch
 
     from tools.council_bridge import feishu_chat_bridge as chat_mod
 
+    sent: dict[str, str] = {}
     monkeypatch.setattr(chat_mod, "CHAT_REQUEST_PATH", tmp_path / "chat_req.json")
     monkeypatch.setattr(chat_mod, "CHAT_RESULT_PATH", tmp_path / "chat_res.json")
-    monkeypatch.setattr(chat_mod, "send_text", lambda **kwargs: {"code": 0, "msg": "ok"})
+    monkeypatch.setattr(
+        chat_mod,
+        "send_text",
+        lambda **kwargs: sent.update({"text": str(kwargs.get("text") or "")}) or {"code": 0, "msg": "ok"},
+    )
 
     from tools.council_bridge import bridge_worker as worker_mod
 
@@ -158,6 +163,8 @@ def test_worker_consumes_chat_task_and_writes_result(tmp_path: Path, monkeypatch
     assert (tmp_path / "chat_res.json").exists()
     chat_res = json.loads((tmp_path / "chat_res.json").read_text(encoding="utf-8"))
     assert chat_res["reply_status"] == "sent"
+    assert "你刚刚的问题" not in sent.get("text", "")
+    assert "聊天模式" in sent.get("text", "")
 
 
 def test_worker_reply_failure_writes_error_artifact(tmp_path: Path, monkeypatch) -> None:
@@ -257,7 +264,43 @@ def test_reconciler_skips_already_processed_and_can_recover(tmp_path: Path) -> N
     assert any(r["route_type"] == "action" for r in results2)
 
 
+def test_reconciler_parses_rich_text_content_for_mode_detection(tmp_path: Path) -> None:
+    messages = [
+        {
+            "message_id": "m-rich-1",
+            "chat_id": "oc_test",
+            "create_time": "1711111114",
+            "body": {
+                "content": json.dumps(
+                    {
+                        "title": "",
+                        "content": [
+                            [
+                                {"tag": "text", "text": "请开始执行并运行测试", "style": []},
+                            ]
+                        ],
+                    },
+                    ensure_ascii=False,
+                )
+            },
+            "sender": {"sender_id": {"open_id": "ou_test"}},
+        }
+    ]
+    _, results = reconcile_once(
+        messages=messages,
+        last_processed_message_id="",
+        source_artifact="artifacts/council_codex_dispatch_ready.json",
+        action_stage="dispatch_ready",
+        check_completion_once=False,
+        build_receipt_skeleton=False,
+        dedupe_state_path=str(tmp_path / "dedupe.json"),
+        route_result_path=str(tmp_path / "route.json"),
+    )
+    assert len(results) == 1
+    assert results[0]["detected_mode"] == "workflow_request"
+    assert results[0]["result_status"] == "needs_owner_action_protocol"
+
+
 def test_websocket_ingress_stub_exists() -> None:
     result = run_websocket_ingress_stub()
     assert result["status"] == "stub"
-

@@ -232,3 +232,37 @@ def test_router_chat_confirm_keyword_does_not_apply(tmp_path: Path) -> None:
     assert result["result_status"] == "ignored"
     unchanged = json.loads(artifact_path.read_text(encoding="utf-8"))
     assert unchanged["status"] == "under_review"
+
+
+def test_router_records_mode_detection_fields_for_plain_chat(tmp_path: Path) -> None:
+    dispatch_artifact = tmp_path / "dispatch_ready.json"
+    dispatch_artifact.write_text(json.dumps({"request_id": "req-1"}), encoding="utf-8")
+
+    result = router_mod.route_message(
+        _payload(text="今天先同步进度", message_id="m-mode-chat", source="feishu_chat"),
+        source_artifact=dispatch_artifact.as_posix(),
+        stage="dispatch_ready",
+        dedupe_state_path=tmp_path / "dedupe.json",
+        route_result_path=tmp_path / "route.json",
+        queue_db_path=tmp_path / "queue.db",
+    )
+    assert result["detected_mode"] == "chat"
+    assert result["detection_reason"]
+    assert result["rule_hit"] == "chat_fallback"
+
+
+def test_router_explicit_workflow_request_not_treated_as_idle_chat(tmp_path: Path) -> None:
+    dispatch_artifact = tmp_path / "dispatch_ready.json"
+    dispatch_artifact.write_text(json.dumps({"request_id": "req-1"}), encoding="utf-8")
+
+    result = router_mod.route_message(
+        _payload(text="请开始执行并运行测试", message_id="m-mode-workflow", source="feishu_chat"),
+        source_artifact=dispatch_artifact.as_posix(),
+        stage="dispatch_ready",
+        dedupe_state_path=tmp_path / "dedupe.json",
+        route_result_path=tmp_path / "route.json",
+        queue_db_path=tmp_path / "queue.db",
+    )
+    assert result["detected_mode"] == "workflow_request"
+    assert result["route_type"] == "workflow_request"
+    assert result["result_status"] == "needs_owner_action_protocol"

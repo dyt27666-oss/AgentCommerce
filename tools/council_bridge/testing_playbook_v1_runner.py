@@ -775,6 +775,8 @@ def run_playbook(*, run_id: str | None = None, output_root: Path = Path("artifac
     summary_path = run_dir / "testing_playbook_summary.json"
     _write_json(summary_path, summary)
 
+    demo_ready_summary_path = run_dir / "demo_ready_summary.json"
+    report_path = run_dir / "demo_ready_report.md"
     demo_ready_summary = {
         "artifact_type": "testing_evidence_index",
         "schema_version": "testing.evidence.v0.1",
@@ -802,8 +804,68 @@ def run_playbook(*, run_id: str | None = None, output_root: Path = Path("artifac
             "governance_event_log": governance_event_log.as_posix(),
             "governance_metrics_snapshot_scenario_c": scenario_c.get("paths", {}).get("governance_metrics_snapshot"),
         },
+        "owner_readable_summary": {
+            "task_summary": {
+                "what_we_did": "执行了测试与展示阶段的 A/B/C 三类闭环场景并产出可审计证据包。",
+                "core_modules": [
+                    "feishu_message_router",
+                    "policy_publish_fsm",
+                    "runtime_failure_event_normalizer",
+                    "runtime_recovery_attempt_runner",
+                ],
+                "closed_loop": bool(summary["all_passed"]),
+            },
+            "key_changes": [
+                {
+                    "target": summary_path.as_posix(),
+                    "change_type": "new",
+                    "purpose": "机器可读完整测试结果，包含每个场景的原始输出。",
+                },
+                {
+                    "target": demo_ready_summary_path.as_posix(),
+                    "change_type": "new",
+                    "purpose": "owner-facing 索引视图，便于决策与演示。",
+                },
+            ],
+            "outcome": {
+                "successes": [
+                    f"Scenario {k} passed={bool(v.get('passed'))}" for k, v in scenarios.items() if bool(v.get("passed"))
+                ],
+                "pending": [f"Scenario {k} passed={bool(v.get('passed'))}" for k, v in scenarios.items() if not bool(v.get("passed"))],
+                "run_state": "demo_ready" if summary["all_passed"] else "needs_fix",
+            },
+            "risks_or_gaps": [
+                "Scenario C 使用故障注入模拟，真实生产故障形态仍需线上验证。",
+                "Feishu 真链路需在真实 webhook/chat 环境进行补充验证。",
+            ],
+            "next_owner_action": [
+                {
+                    "what": "查看演示报告",
+                    "how": f"Get-Content -Raw {report_path.as_posix()}",
+                    "where": report_path.as_posix(),
+                },
+                {
+                    "what": "在飞书侧执行真实链路验证",
+                    "how": "按 testing-playbook-v1.md 的 4.3 步骤发送消息并核验 artifact",
+                    "where": "docs/testing-playbook-v1.md",
+                },
+            ],
+            "concise_technical_evidence": [
+                {
+                    "artifact": scenario_a.get("evidence_index_path"),
+                    "proves": "普通聊天消息进入 chat lane queue，并记录 scope/router 观测事件。",
+                },
+                {
+                    "artifact": scenario_b.get("evidence_index_path"),
+                    "proves": "owner feedback -> confirm apply -> publish FSM 可闭环。",
+                },
+                {
+                    "artifact": scenario_c.get("evidence_index_path"),
+                    "proves": "failure -> recovery -> reconcile -> metrics snapshot 闭环有效。",
+                },
+            ],
+        },
     }
-    demo_ready_summary_path = run_dir / "demo_ready_summary.json"
     _write_json(demo_ready_summary_path, demo_ready_summary)
 
     report_lines = [
@@ -831,7 +893,6 @@ def run_playbook(*, run_id: str | None = None, output_root: Path = Path("artifac
             f"- scenario C snapshot: `{scenario_c.get('paths', {}).get('governance_metrics_snapshot')}`",
         ]
     )
-    report_path = run_dir / "demo_ready_report.md"
     _write_text(report_path, "\n".join(report_lines) + "\n")
 
     return {

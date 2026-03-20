@@ -72,8 +72,22 @@ def _parse_message_text(item: dict[str, Any]) -> str:
         return ""
     try:
         decoded = json.loads(content)
-        if isinstance(decoded, dict) and isinstance(decoded.get("text"), str):
-            return decoded["text"]
+        if isinstance(decoded, dict):
+            if isinstance(decoded.get("text"), str):
+                return decoded["text"]
+            rich_content = decoded.get("content")
+            if isinstance(rich_content, list):
+                texts: list[str] = []
+                for row in rich_content:
+                    if not isinstance(row, list):
+                        continue
+                    for cell in row:
+                        if isinstance(cell, dict) and isinstance(cell.get("text"), str):
+                            text = cell.get("text", "").strip()
+                            if text:
+                                texts.append(text)
+                if texts:
+                    return "".join(texts)
     except Exception:
         pass
     return content

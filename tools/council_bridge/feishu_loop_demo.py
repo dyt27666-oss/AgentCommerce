@@ -39,6 +39,106 @@ DEFAULT_CONTINUATION_OUTPUT = Path("artifacts") / "council_feishu_action_round_b
 DEFAULT_SUMMARY_OUTPUT = Path("artifacts") / "council_feishu_loop_demo_summary.json"
 
 
+def _build_owner_readable_summary(
+    *,
+    source_artifact_path: Path,
+    source_data: dict[str, Any],
+    notification_level: str,
+    send_mode: str,
+    owner_action: str | None,
+    continuation_status: str | None,
+) -> dict[str, Any]:
+    core_modules = ["feishu_notifier", "feishu_owner_action_writer", "feishu_action_round_bridge"]
+    key_changes = [
+        {
+            "target": source_artifact_path.as_posix(),
+            "change_type": "read",
+            "purpose": "读取当前轮次的控制工件并生成 owner-facing 通知。",
+        }
+    ]
+    if owner_action:
+        key_changes.extend(
+            [
+                {
+                    "target": DEFAULT_ACTION_OUTPUT.as_posix(),
+                    "change_type": "new",
+                    "purpose": "记录 owner 动作（dispatch/hold/needs_fix/reject）作为可审计输入。",
+                },
+                {
+                    "target": DEFAULT_CONTINUATION_OUTPUT.as_posix(),
+                    "change_type": "new",
+                    "purpose": "生成 round continuation 建议，明确下一步链路。",
+                },
+            ]
+        )
+
+    successes = ["已生成飞书通知摘要文本。"]
+    pending = []
+    if send_mode == "send":
+        successes.append("已尝试发送到 Feishu webhook。")
+    else:
+        pending.append("当前是 dry-run，尚未真实发送到 Feishu。")
+    if owner_action:
+        successes.append(f"已记录 owner_action={owner_action} 并生成 continuation artifact。")
+    else:
+        pending.append("未记录 owner action，回路尚未闭环。")
+
+    next_actions = [
+        {
+            "what": "在终端查看摘要 JSON",
+            "how": f"Get-Content -Raw {DEFAULT_SUMMARY_OUTPUT.as_posix()}",
+            "where": DEFAULT_SUMMARY_OUTPUT.as_posix(),
+        }
+    ]
+    if owner_action is None:
+        next_actions.append(
+            {
+                "what": "在飞书发出明确动作",
+                "how": "发送：dispatch / hold / needs_fix / reject",
+                "where": "Feishu group chat",
+            }
+        )
+
+    evidence = [
+        {
+            "artifact": source_artifact_path.as_posix(),
+            "proves": "本轮 summary 基于该源 artifact 生成，身份链路可追溯。",
+        },
+        {
+            "artifact": DEFAULT_SUMMARY_OUTPUT.as_posix(),
+            "proves": "包含通知结果、owner-facing summary 与下一步动作建议。",
+        },
+    ]
+    if owner_action:
+        evidence.append(
+            {
+                "artifact": DEFAULT_CONTINUATION_OUTPUT.as_posix(),
+                "proves": f"owner 动作已落盘并转化为 continuation 计划（state={continuation_status or 'n/a'}）。",
+            }
+        )
+
+    return {
+        "task_summary": {
+            "what_we_did": "生成面向 owner 的控制链路通知摘要，并在可选情况下记录 owner_action continuation。",
+            "core_modules": core_modules,
+            "closed_loop": bool(owner_action),
+        },
+        "key_changes": key_changes,
+        "outcome": {
+            "successes": successes,
+            "pending": pending,
+            "run_state": "runnable" if owner_action else "notification_only",
+        },
+        "risks_or_gaps": [
+            "dry-run 模式下不会验证真实 Feishu webhook 可达性。" if send_mode != "send" else "已发送但仍需群聊侧人工确认消息可见。",
+            "owner_action 缺失时无法推进到下一轮自动链路。",
+        ],
+        "next_owner_action": next_actions,
+        "concise_technical_evidence": evidence,
+        "meta": {"notification_level": notification_level, "send_mode": send_mode},
+    }
+
+
 def run_feishu_loop_demo(
     source_artifact_path: Path,
     *,
@@ -111,6 +211,15 @@ def run_feishu_loop_demo(
         result["continuation_artifact_path"] = continuation_output_path.as_posix()
         result["recommended_next_step"] = continuation.get("recommended_next_step")
         result["round_flow_state"] = continuation.get("round_flow_state")
+
+    result["owner_readable_summary"] = _build_owner_readable_summary(
+        source_artifact_path=source_artifact_path,
+        source_data=source_data,
+        notification_level=level,
+        send_mode=send_mode,
+        owner_action=owner_action,
+        continuation_status=result.get("round_flow_state"),
+    )
 
     return result
 

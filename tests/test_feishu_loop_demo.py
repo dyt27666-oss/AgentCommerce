@@ -89,3 +89,15 @@ def test_action_to_continuation_mapping(tmp_path: Path, action: str, expected_fl
     assert result["round_flow_state"] == expected_flow
     assert continuation_output.exists()
 
+
+def test_owner_readable_summary_contains_decision_fields(tmp_path: Path) -> None:
+    source = tmp_path / "dispatch_ready.json"
+    _write_json(source, _dispatch_ready_sample())
+
+    result = run_feishu_loop_demo(source, send_mode="dry-run", level="detail")
+    summary = result["owner_readable_summary"]
+    assert summary["task_summary"]["closed_loop"] in {True, False}
+    assert isinstance(summary["key_changes"], list)
+    assert "successes" in summary["outcome"]
+    assert "next_owner_action" in summary
+    assert isinstance(summary["concise_technical_evidence"], list)

@@ -44,6 +44,8 @@ from tools.council_bridge.governance_event_log import (
     build_governance_event,
     ingest_governance_event,
 )
+from tools.council_bridge.message_mode_policy import MODE_WORKFLOW_REQUEST, decide_message_mode
+from tools.council_bridge.permission_policy import evaluate_permission_context
 
 
 CONTINUE_ONCE_SCRIPT = Path("tools") / "council_bridge" / "feishu_continue_once.py"
@@ -396,6 +398,18 @@ def route_message(
     resolved_stage = resolve_stage_from_source_artifact(source_artifact) if stage == "auto" else stage
     allowed = allowed_actions_for_stage(resolved_stage)
     action = extract_action_from_text(payload["text"])
+    execution_trigger = extract_execution_trigger(payload)
+    confirm_allowed, confirm_keyword = _extract_council_confirm_signal(payload)
+    role_confirm_allowed, role_confirm_keyword = _extract_role_rework_confirm_signal(payload)
+    mode_decision = decide_message_mode(
+        text=str(payload.get("text") or ""),
+        source=str(payload.get("source") or ""),
+        detected_action=action,
+        execution_trigger_detected=bool(execution_trigger.get("is_trigger")),
+        council_confirm_keyword=confirm_keyword,
+        role_rework_confirm_keyword=role_confirm_keyword,
+    )
+    permission_decision = evaluate_permission_context(str(payload.get("text") or ""))
     dedupe = check_and_mark_dedupe(payload, state_path=dedupe_state_path)
     try:
         cfg = resolve_runtime_config(
@@ -452,6 +466,16 @@ def route_message(
         "execution_gate_status": "not_applicable",
         "execution_brief_path": "",
         "scope_validation": {},
+        "detected_mode": mode_decision.detected_mode,
+        "detection_reason": mode_decision.detection_reason,
+        "confidence": mode_decision.confidence,
+        "rule_hit": mode_decision.rule_hit,
+        "requested_permission_level": permission_decision.requested_permission_level,
+        "granted_permission_level": permission_decision.granted_permission_level,
+        "permission_source": permission_decision.permission_source,
+        "confirmation_required": permission_decision.confirmation_required,
+        "missing_permission_reason": permission_decision.missing_permission_reason,
+        "recommended_grant_phrase": permission_decision.recommended_grant_phrase,
     }
 
     linked = _safe_load_json(Path(source_artifact))
@@ -537,16 +561,15 @@ def route_message(
         return result
 
     if _is_council_artifact_context(linked):
-        exec_trigger = extract_execution_trigger(payload)
-        if exec_trigger["is_trigger"]:
+        if execution_trigger["is_trigger"]:
             if resolved_stage == "execution_dispatch":
                 dispatch_result = dispatch_owner_confirmed_execution(
                     handoff_artifact_path=Path(source_artifact),
-                    trigger=exec_trigger,
+                    trigger=execution_trigger,
                     confirmed_by=str(payload.get("sender_id") or "feishu_unknown"),
-                    confirmed_by_lane=str(exec_trigger.get("requested_by_lane") or "chat"),
+                    confirmed_by_lane=str(execution_trigger.get("requested_by_lane") or "chat"),
                     current_stage=resolved_stage,
-                    reason=f"owner confirmed via {exec_trigger.get('keyword')}",
+                    reason=f"owner confirmed via {execution_trigger.get('keyword')}",
                     dispatch_result_path=council_execution_dispatch_result_path,
                     runtime_status_path=council_execution_runtime_status_path,
                     execution_receipt_path=council_execution_receipt_path,
@@ -572,7 +595,7 @@ def route_message(
             gate_result = validate_execution_handoff_gate(
                 artifact=linked,
                 current_stage=resolved_stage,
-                trigger=exec_trigger,
+                trigger=execution_trigger,
             )
             write_execution_handoff_gate_result(gate_result, council_execution_gate_result_path)
             result["route_type"] = "council"
@@ -586,7 +609,7 @@ def route_message(
                 result["execution_brief_path"] = council_execution_brief_path.as_posix()
                 result["result_status"] = "observed"
                 result["result_info"] = _summarize_execution_handoff_observation(
-                    trigger_keyword=exec_trigger.get("keyword"),
+                    trigger_keyword=execution_trigger.get("keyword"),
                     gate_ready=True,
                     blocked_reason="",
                     brief_generated=True,
@@ -595,7 +618,7 @@ def route_message(
                 result["result_status"] = "blocked"
                 result["ignored_reason"] = str(gate_result.get("blocked_reason") or "")
                 result["result_info"] = _summarize_execution_handoff_observation(
-                    trigger_keyword=exec_trigger.get("keyword"),
+                    trigger_keyword=execution_trigger.get("keyword"),
                     gate_ready=False,
                     blocked_reason=result["ignored_reason"],
                     brief_generated=False,
@@ -603,7 +626,6 @@ def route_message(
             _write_json(route_result_path, result)
             return result
 
-        confirm_allowed, confirm_keyword = _extract_council_confirm_signal(payload)
         if confirm_keyword is not None:
             if not confirm_allowed:
                 result["route_type"] = "council"
@@ -668,7 +690,6 @@ def route_message(
             "alias_scope": result.get("alias_scope"),
         }
 
-        role_confirm_allowed, role_confirm_keyword = _extract_role_rework_confirm_signal(payload)
         if role_confirm_keyword is not None:
             if not role_confirm_allowed:
                 result["route_type"] = "council"
@@ -778,6 +799,17 @@ def route_message(
         return result
 
     if action is None:
+        if result["detected_mode"] == MODE_WORKFLOW_REQUEST:
+            result["route_type"] = "workflow_request"
+            result["result_status"] = "needs_owner_action_protocol"
+            result["ignored_reason"] = "workflow request detected but no executable protocol action was provided."
+            result["result_info"] = (
+                "workflow_request detected; to execute, use protocol keyword/action source "
+                "(dispatch/approved/needs_fix/reject/confirm_*)."
+            )
+            _write_json(route_result_path, result)
+            return result
+
         # chat lane
         if not bool(cfg.get("chat_lane_enabled", True)):
             result["ignored_reason"] = "chat lane disabled by configuration."

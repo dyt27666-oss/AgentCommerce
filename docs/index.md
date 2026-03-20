@@ -14,6 +14,8 @@
   测试与展示阶段最小可执行方案（A/B/C 场景、落盘证据、验收清单）。
 - [Git Operations Playbook v1](git-operations-playbook-v1.md)  
   稳定提交、tag 检查点、回滚恢复与演示前 Git 检查清单。
+- [Mode And Permission Playbook v1](mode-and-permission-playbook-v1.md)  
+  Chat/Workflow 模式判定、权限分级授权与确认策略。
 
 ## Governance
 
